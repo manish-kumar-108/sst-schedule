@@ -1,0 +1,1320 @@
+{
+  "A": {
+    "Monday": [
+      {
+        "row": 4,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "Claas A 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "ICP - 2030 Grp A (Akansha) Claas A 2nd floor"
+      },
+      {
+        "row": 12,
+        "title": "English - 2030",
+        "instructor": "Fiza",
+        "location": "Class B 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 690,
+        "endMinutes": 795,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:15 PM",
+        "raw": "English - 2030 Grp A (Fiza) Class B 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 36,
+        "title": "Academic Clubs",
+        "instructor": "",
+        "location": "Class A 2nd floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1200,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "8:00 PM",
+        "raw": "Academic Clubs [5:30 - 8 PM] Class A 2nd floor"
+      }
+    ],
+    "Tuesday": [
+      {
+        "row": 4,
+        "title": "Web Dev -",
+        "instructor": "Shubham",
+        "location": "Class B 2nd floor",
+        "batch": "2030 Grp A",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "Web Dev - 2030 Grp A (Shubham) Class B 2nd floor"
+      },
+      {
+        "row": 12,
+        "title": "Maths - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 690,
+        "endMinutes": 795,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:15 PM",
+        "raw": "Maths - 2030 Grp A (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 34,
+        "title": "Web Dev LAB -",
+        "instructor": "Shubham",
+        "location": "Class B 1st floor",
+        "batch": "2030 Grp A",
+        "startMinutes": 1020,
+        "endMinutes": 1110,
+        "startTimeFormatted": "5:00 PM",
+        "endTimeFormatted": "6:30 PM",
+        "raw": "Web Dev LAB - 2030 Grp A (Shubham) Class B 1st floor"
+      }
+    ],
+    "Wednesday": [
+      {
+        "row": 4,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "Claas A 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "ICP - 2030 Grp A (Akansha) Claas A 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 24,
+        "title": "English - 2030",
+        "instructor": "Fiza",
+        "location": "Class B 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 870,
+        "endMinutes": 975,
+        "startTimeFormatted": "2:30 PM",
+        "endTimeFormatted": "4:15 PM",
+        "raw": "English - 2030 Grp A (Fiza) Class B 2nd floor"
+      },
+      {
+        "row": 34,
+        "title": "ICP LAB - 2030",
+        "instructor": "Akansha",
+        "location": "Class B 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 1020,
+        "endMinutes": 1110,
+        "startTimeFormatted": "5:00 PM",
+        "endTimeFormatted": "6:30 PM",
+        "raw": "ICP LAB - 2030 Grp A (Akansha) Class B 2nd floor"
+      }
+    ],
+    "Thursday": [
+      {
+        "row": 4,
+        "title": "Web Dev -",
+        "instructor": "Shubham",
+        "location": "Class B 2nd floor",
+        "batch": "2030 Grp A",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "Web Dev - 2030 Grp A (Shubham) Class B 2nd floor"
+      },
+      {
+        "row": 12,
+        "title": "Maths - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 690,
+        "endMinutes": 795,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:15 PM",
+        "raw": "Maths - 2030 Grp A (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 30,
+        "title": "Web Dev LAB -",
+        "instructor": "Shubham",
+        "location": "Class A 2nd floor",
+        "batch": "2030 Grp A",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "Web Dev LAB - 2030 Grp A (Shubham) Class A 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1170,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:30 PM",
+        "raw": "CP Foundation Module Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Friday": [
+      {
+        "row": 4,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "Claas A 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "ICP - 2030 Grp A (Akansha) Claas A 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 30,
+        "title": "ICP LAB - 2030",
+        "instructor": "Akansha",
+        "location": "Class B 2nd floor",
+        "batch": "Grp A",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "ICP LAB - 2030 Grp A (Akansha) Class B 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module LAB",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1140,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:00 PM",
+        "raw": "CP Foundation Module LAB Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Saturday": [],
+    "Sunday": []
+  },
+  "B": {
+    "Monday": [
+      {
+        "row": 12,
+        "title": "Maths - 2030",
+        "instructor": "Ayush",
+        "location": "Class A 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 690,
+        "endMinutes": 795,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:15 PM",
+        "raw": "Maths - 2030 Grp B (Ayush) Class A 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 30,
+        "title": "ICP LAB - 2030",
+        "instructor": "Akansha",
+        "location": "Class A 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "ICP LAB - 2030 Grp B (Akansha) Class A 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "Academic Clubs",
+        "instructor": "",
+        "location": "Class A 2nd floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1200,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "8:00 PM",
+        "raw": "Academic Clubs [5:30 - 8 PM] Class A 2nd floor"
+      }
+    ],
+    "Tuesday": [
+      {
+        "row": 4,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "Class A 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "ICP - 2030 Grp B (Akansha) Class A 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 24,
+        "title": "Web Dev -",
+        "instructor": "Shubham",
+        "location": "Class B 2nd floor",
+        "batch": "2030 Grp B",
+        "startMinutes": 870,
+        "endMinutes": 975,
+        "startTimeFormatted": "2:30 PM",
+        "endTimeFormatted": "4:15 PM",
+        "raw": "Web Dev - 2030 Grp B (Shubham) Class B 2nd floor"
+      }
+    ],
+    "Wednesday": [
+      {
+        "row": 4,
+        "title": "English - 2030",
+        "instructor": "Fiza",
+        "location": "Class B 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "English - 2030 Grp B (Fiza) Class B 2nd floor"
+      },
+      {
+        "row": 12,
+        "title": "Maths - 2030",
+        "instructor": "Ayush",
+        "location": "Class A 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 690,
+        "endMinutes": 795,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:15 PM",
+        "raw": "Maths - 2030 Grp B (Ayush) Class A 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 34,
+        "title": "Web Dev LAB -",
+        "instructor": "Shubham",
+        "location": "Class C Ground floor",
+        "batch": "2030 Grp B",
+        "startMinutes": 1020,
+        "endMinutes": 1110,
+        "startTimeFormatted": "5:00 PM",
+        "endTimeFormatted": "6:30 PM",
+        "raw": "Web Dev LAB - 2030 Grp B (Shubham) Class C Ground floor"
+      }
+    ],
+    "Thursday": [
+      {
+        "row": 4,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "Class A 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "ICP - 2030 Grp B (Akansha) Class A 2nd floor"
+      },
+      {
+        "row": 12,
+        "title": "Web Dev -",
+        "instructor": "Shubham",
+        "location": "Class B 2nd floor",
+        "batch": "2030 Grp B",
+        "startMinutes": 690,
+        "endMinutes": 795,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:15 PM",
+        "raw": "Web Dev - 2030 Grp B (Shubham) Class B 2nd floor"
+      },
+      {
+        "row": 20,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 810,
+        "endMinutes": 870,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "2:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 30,
+        "title": "ICP LAB - 2030",
+        "instructor": "Akansha",
+        "location": "Class C 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "ICP LAB - 2030 Grp B (Akansha) Class C 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1170,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:30 PM",
+        "raw": "CP Foundation Module Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Friday": [
+      {
+        "row": 4,
+        "title": "English - 2030",
+        "instructor": "Fiza",
+        "location": "Class B 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "English - 2030 Grp B (Fiza) Class B 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "Class A 2nd floor",
+        "batch": "Grp B",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "ICP - 2030 Grp B (Akansha) Class A 2nd floor"
+      },
+      {
+        "row": 30,
+        "title": "Web Dev LAB -",
+        "instructor": "Shubham",
+        "location": "Class A 2nd floor",
+        "batch": "2030 Grp B",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "Web Dev LAB - 2030 Grp B (Shubham) Class A 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module LAB",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1140,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:00 PM",
+        "raw": "CP Foundation Module LAB Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Saturday": [],
+    "Sunday": []
+  },
+  "C": {
+    "Monday": [
+      {
+        "row": 4,
+        "title": "ICP - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp C",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "ICP - 2030 Grp C (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "Maths - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp C",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "Maths - 2030 Grp C (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 30,
+        "title": "ICP LAB - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp C",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "ICP LAB - 2030 Grp C (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "Academic Clubs",
+        "instructor": "",
+        "location": "Class A 2nd floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1200,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "8:00 PM",
+        "raw": "Academic Clubs [5:30 - 8 PM] Class A 2nd floor"
+      }
+    ],
+    "Tuesday": [
+      {
+        "row": 4,
+        "title": "Web Dev -",
+        "instructor": "Harsh",
+        "location": "Class C 2nd floor",
+        "batch": "2030 Grp C",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "Web Dev - 2030 Grp C (Harsh) Class C 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "ICP - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C Ground floor",
+        "batch": "Grp C",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "ICP - 2030 Grp C (Pushkar) Class C Ground floor"
+      },
+      {
+        "row": 34,
+        "title": "Web Dev LAB -",
+        "instructor": "Harsh",
+        "location": "Class B 2nd floor",
+        "batch": "2030 Grp C",
+        "startMinutes": 1020,
+        "endMinutes": 1110,
+        "startTimeFormatted": "5:00 PM",
+        "endTimeFormatted": "6:30 PM",
+        "raw": "Web Dev LAB - 2030 Grp C (Harsh) Class B 2nd floor"
+      }
+    ],
+    "Wednesday": [
+      {
+        "row": 4,
+        "title": "ICP - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp C",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "ICP - 2030 Grp C (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "English - 2030",
+        "instructor": "Dr. Noor",
+        "location": "Class C Ground floor",
+        "batch": "Grp C",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "English - 2030 Grp C (Dr. Noor) Class C Ground floor"
+      },
+      {
+        "row": 34,
+        "title": "ICP LAB - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp C",
+        "startMinutes": 1020,
+        "endMinutes": 1110,
+        "startTimeFormatted": "5:00 PM",
+        "endTimeFormatted": "6:30 PM",
+        "raw": "ICP LAB - 2030 Grp C (Pushkar) Class C 2nd floor"
+      }
+    ],
+    "Thursday": [
+      {
+        "row": 4,
+        "title": "Web Dev -",
+        "instructor": "Harsh",
+        "location": "Class C 2nd floor",
+        "batch": "2030 Grp C",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "Web Dev - 2030 Grp C (Harsh) Class C 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "Maths - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp C",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "Maths - 2030 Grp C (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 30,
+        "title": "Web Dev LAB -",
+        "instructor": "Harsh",
+        "location": "Class B 2nd floor",
+        "batch": "2030 Grp C",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "Web Dev LAB - 2030 Grp C (Harsh) Class B 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1170,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:30 PM",
+        "raw": "CP Foundation Module Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Friday": [
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "English - 2030",
+        "instructor": "Dr. Noor",
+        "location": "Class B1 2nd floor",
+        "batch": "Grp C",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "English - 2030 Grp C (Dr. Noor) Class B1 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module LAB",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1140,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:00 PM",
+        "raw": "CP Foundation Module LAB Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Saturday": [],
+    "Sunday": []
+  },
+  "D": {
+    "Monday": [
+      {
+        "row": 12,
+        "title": "Web Dev -",
+        "instructor": "Harsh",
+        "location": "Class C 2nd floor",
+        "batch": "2030 Grp D",
+        "startMinutes": 690,
+        "endMinutes": 780,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:00 PM",
+        "raw": "Web Dev - 2030 Grp D (Harsh) Class C 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "English - 2030",
+        "instructor": "Dr. Noor",
+        "location": "Class B 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "English - 2030 Grp D (Dr. Noor) Class B 2nd floor"
+      },
+      {
+        "row": 30,
+        "title": "Web Dev LAB -",
+        "instructor": "Harsh",
+        "location": "Class B 2nd floor",
+        "batch": "2030 Grp D",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "Web Dev LAB - 2030 Grp D (Harsh) Class B 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "Academic Clubs",
+        "instructor": "",
+        "location": "Class A 2nd floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1200,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "8:00 PM",
+        "raw": "Academic Clubs [5:30 - 8 PM] Class A 2nd floor"
+      }
+    ],
+    "Tuesday": [
+      {
+        "row": 12,
+        "title": "ICP - 2030",
+        "instructor": "Utkarsh",
+        "location": "Class A 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 690,
+        "endMinutes": 795,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:15 PM",
+        "raw": "ICP - 2030 Grp D (Utkarsh) Class A 2nd floor"
+      },
+      {
+        "row": 22,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 840,
+        "endMinutes": 900,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 26,
+        "title": "Web Dev LAB -",
+        "instructor": "Harsh",
+        "location": "Class C 2nd floor",
+        "batch": "2030 Grp D",
+        "startMinutes": 900,
+        "endMinutes": 1020,
+        "startTimeFormatted": "3:00 PM",
+        "endTimeFormatted": "5:00 PM",
+        "raw": "Web Dev LAB - 2030 Grp D (Harsh) Class C 2nd floor"
+      },
+      {
+        "row": 34,
+        "title": "ICP LAB - 2030",
+        "instructor": "Utkarsh",
+        "location": "Class C 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 1020,
+        "endMinutes": 1110,
+        "startTimeFormatted": "5:00 PM",
+        "endTimeFormatted": "6:30 PM",
+        "raw": "ICP LAB - 2030 Grp D (Utkarsh) Class C 2nd floor"
+      }
+    ],
+    "Wednesday": [
+      {
+        "row": 12,
+        "title": "Web Dev -",
+        "instructor": "Harsh",
+        "location": "Class C 2nd floor",
+        "batch": "2030 Grp D",
+        "startMinutes": 690,
+        "endMinutes": 780,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:00 PM",
+        "raw": "Web Dev - 2030 Grp D (Harsh) Class C 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "Maths - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "Maths - 2030 Grp D (Pushkar) Class C 2nd floor"
+      }
+    ],
+    "Thursday": [
+      {
+        "row": 12,
+        "title": "ICP - 2030",
+        "instructor": "Utkarsh",
+        "location": "Class A 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 690,
+        "endMinutes": 780,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:00 PM",
+        "raw": "ICP - 2030 Grp D (Utkarsh) Class A 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "English - 2030",
+        "instructor": "Dr. Noor",
+        "location": "Class B 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "English - 2030 Grp D (Dr. Noor) Class B 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1170,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:30 PM",
+        "raw": "CP Foundation Module Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Friday": [
+      {
+        "row": 12,
+        "title": "ICP - 2030",
+        "instructor": "Utkarsh",
+        "location": "Class A 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 690,
+        "endMinutes": 780,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:00 PM",
+        "raw": "ICP - 2030 Grp D (Utkarsh) Class A 2nd floor"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 22,
+        "title": "Maths - 2030",
+        "instructor": "Pushkar",
+        "location": "Class C 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 840,
+        "endMinutes": 945,
+        "startTimeFormatted": "2:00 PM",
+        "endTimeFormatted": "3:45 PM",
+        "raw": "Maths - 2030 Grp D (Pushkar) Class C 2nd floor"
+      },
+      {
+        "row": 30,
+        "title": "ICP LAB - 2030",
+        "instructor": "Utkarsh",
+        "location": "Class C 2nd floor",
+        "batch": "Grp D",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "ICP LAB - 2030 Grp D (Utkarsh) Class C 2nd floor"
+      },
+      {
+        "row": 36,
+        "title": "CP Foundation Module LAB",
+        "instructor": "Pushkar",
+        "location": "Classroom C, Ground Floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1140,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "7:00 PM",
+        "raw": "CP Foundation Module LAB Pushkar (Classroom C, Ground Floor)"
+      }
+    ],
+    "Saturday": [],
+    "Sunday": []
+  },
+  "E": {
+    "Monday": [
+      {
+        "row": 4,
+        "title": "Web Dev -",
+        "instructor": "Harsh",
+        "location": "EC SST Classroom",
+        "batch": "2030 Grp E",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "Web Dev - 2030 Grp E (Harsh) (EC SST Classroom)"
+      },
+      {
+        "row": 12,
+        "title": "ICP LAB - 2030",
+        "instructor": "Akansha",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 690,
+        "endMinutes": 780,
+        "startTimeFormatted": "11:30 AM",
+        "endTimeFormatted": "1:00 PM",
+        "raw": "ICP LAB - 2030 Grp E (Akansha) (EC SST Classroom)"
+      },
+      {
+        "row": 18,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 780,
+        "endMinutes": 840,
+        "startTimeFormatted": "1:00 PM",
+        "endTimeFormatted": "2:00 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 21,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 825,
+        "endMinutes": 930,
+        "startTimeFormatted": "1:45 PM",
+        "endTimeFormatted": "3:30 PM",
+        "raw": "ICP - 2030 Grp E (Akansha) (EC SST Classroom)"
+      },
+      {
+        "row": 36,
+        "title": "Academic Clubs",
+        "instructor": "",
+        "location": "Class A 2nd floor",
+        "batch": "",
+        "startMinutes": 1050,
+        "endMinutes": 1200,
+        "startTimeFormatted": "5:30 PM",
+        "endTimeFormatted": "8:00 PM",
+        "raw": "Academic Clubs [5:30 - 8 PM] Class A 2nd floor"
+      }
+    ],
+    "Tuesday": [
+      {
+        "row": 10,
+        "title": "Maths - 2030",
+        "instructor": "Ayush",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 660,
+        "endMinutes": 750,
+        "startTimeFormatted": "11:00 AM",
+        "endTimeFormatted": "12:30 PM",
+        "raw": "Maths - 2030 Grp E (Ayush) (EC SST Classroom)"
+      },
+      {
+        "row": 16,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 750,
+        "endMinutes": 810,
+        "startTimeFormatted": "12:30 PM",
+        "endTimeFormatted": "1:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 20,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 810,
+        "endMinutes": 915,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "3:15 PM",
+        "raw": "ICP - 2030 Grp E (Akansha) (EC SST Classroom)"
+      },
+      {
+        "row": 30,
+        "title": "ICP LAB - 2030",
+        "instructor": "Akansha",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 960,
+        "endMinutes": 1050,
+        "startTimeFormatted": "4:00 PM",
+        "endTimeFormatted": "5:30 PM",
+        "raw": "ICP LAB - 2030 Grp E (Akansha) (EC SST Classroom)"
+      }
+    ],
+    "Wednesday": [
+      {
+        "row": 4,
+        "title": "Web Dev -",
+        "instructor": "Harsh",
+        "location": "EC SST Classroom",
+        "batch": "2030 Grp E",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "Web Dev - 2030 Grp E (Harsh) (EC SST Classroom)"
+      },
+      {
+        "row": 16,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 750,
+        "endMinutes": 810,
+        "startTimeFormatted": "12:30 PM",
+        "endTimeFormatted": "1:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 20,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 810,
+        "endMinutes": 915,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "3:15 PM",
+        "raw": "ICP - 2030 Grp E (Akansha) (EC SST Classroom)"
+      },
+      {
+        "row": 32,
+        "title": "Web Dev LAB -",
+        "instructor": "Harsh",
+        "location": "EC SST Classroom",
+        "batch": "2030 Grp E",
+        "startMinutes": 990,
+        "endMinutes": 1080,
+        "startTimeFormatted": "4:30 PM",
+        "endTimeFormatted": "6:00 PM",
+        "raw": "Web Dev LAB - 2030 Grp E (Harsh) (EC SST Classroom)"
+      }
+    ],
+    "Thursday": [
+      {
+        "row": 10,
+        "title": "Maths - 2030",
+        "instructor": "Ayush",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 660,
+        "endMinutes": 750,
+        "startTimeFormatted": "11:00 AM",
+        "endTimeFormatted": "12:30 PM",
+        "raw": "Maths - 2030 Grp E (Ayush) (EC SST Classroom)"
+      },
+      {
+        "row": 16,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 750,
+        "endMinutes": 810,
+        "startTimeFormatted": "12:30 PM",
+        "endTimeFormatted": "1:30 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 20,
+        "title": "ICP - 2030",
+        "instructor": "Akansha",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 810,
+        "endMinutes": 915,
+        "startTimeFormatted": "1:30 PM",
+        "endTimeFormatted": "3:15 PM",
+        "raw": "ICP - 2030 Grp E (Akansha) (EC SST Classroom)"
+      }
+    ],
+    "Friday": [
+      {
+        "row": 4,
+        "title": "Web Dev -",
+        "instructor": "Harsh",
+        "location": "EC SST Classroom",
+        "batch": "2030 Grp E",
+        "startMinutes": 570,
+        "endMinutes": 675,
+        "startTimeFormatted": "9:30 AM",
+        "endTimeFormatted": "11:15 AM",
+        "raw": "Web Dev - 2030 Grp E (Harsh) (EC SST Classroom)"
+      },
+      {
+        "row": 11,
+        "title": "Maths - 2030",
+        "instructor": "Ayush",
+        "location": "EC SST Classroom",
+        "batch": "Grp E",
+        "startMinutes": 675,
+        "endMinutes": 765,
+        "startTimeFormatted": "11:15 AM",
+        "endTimeFormatted": "12:45 PM",
+        "raw": "Maths - 2030 Grp E (Ayush) (EC SST Classroom)"
+      },
+      {
+        "row": 17,
+        "title": "Lunch Break",
+        "instructor": "Recharge your Hunger Bar!",
+        "location": "Cafeteria / Dining Area",
+        "batch": "",
+        "startMinutes": 765,
+        "endMinutes": 825,
+        "startTimeFormatted": "12:45 PM",
+        "endTimeFormatted": "1:45 PM",
+        "raw": "Lunch"
+      },
+      {
+        "row": 32,
+        "title": "Web Dev LAB -",
+        "instructor": "Harsh",
+        "location": "EC SST Classroom",
+        "batch": "2030 Grp E",
+        "startMinutes": 990,
+        "endMinutes": 1080,
+        "startTimeFormatted": "4:30 PM",
+        "endTimeFormatted": "6:00 PM",
+        "raw": "Web Dev LAB - 2030 Grp E (Harsh) (EC SST Classroom)"
+      }
+    ],
+    "Saturday": [],
+    "Sunday": []
+  }
+}
