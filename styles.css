@@ -51,6 +51,27 @@
   user-select: none;
 }
 
+.sync-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.bookmarklet-btn {
+  background-color: green;
+  color: white;
+  padding: 10px 15px;
+  text-decoration: none;
+  display: inline-block;
+  display: inline-block;
+  border: 4px solid black;
+  font-weight: bold;
+  cursor: grab;
+}
+
+.bookmarklet-btn:active {
+  cursor: grabbing;
+}
+
 body {
   font-family: var(--mc-font);
   background-color: #121214;
