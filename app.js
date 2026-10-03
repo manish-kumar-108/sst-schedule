@@ -1335,6 +1335,7 @@ const JSONP_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq
 
 // State Variables
 let currentGroup = localStorage.getItem('sst_schedule_group') || 'A';
+let currentTheme = localStorage.getItem('sst_ui_theme') || 'minecraft';
 let soundEnabled = localStorage.getItem('sst_sound_enabled') !== 'false';
 let scheduleData = null;
 let swRegistration = null;
@@ -1353,14 +1354,17 @@ let audioCtx = null;
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
   initScheduleData();
+  applyTheme(currentTheme, false);
   setupUIEventListeners();
   setupGroupButtons();
   initAudio();
+  initAmbientEngine();
+  attachMicroInteractions();
   registerServiceWorker();
   checkNotificationStatus();
   
-  // Start main loop
-  updateDashboard();
+  // Start main loop immediately
+  tickRealtimeClock();
   setInterval(tickRealtimeClock, 1000);
 
   // Sync latest schedule in background from Google Sheet
@@ -1989,23 +1993,33 @@ function updateDashboard() {
 
 function renderStaminaIcons(status) {
   const container = document.getElementById('staminaIconsRow');
-  if (status.statusType === 'LUNCH') {
-    // Render 10 hunger shanks
-    const full = Math.round((status.progressPct / 100) * 10);
-    let html = '';
-    for (let i = 0; i < 10; i++) {
-      html += i < (10 - full) ? '🍗' : '🦴';
-    }
-    container.innerHTML = html;
+  if (!container) return;
+
+  const isLunch = status.statusType === 'LUNCH';
+  const remainingCount = isLunch 
+    ? Math.max(0, 10 - Math.round((status.progressPct / 100) * 10))
+    : Math.min(10, Math.ceil((status.minsRemaining / (status.totalDuration || 105)) * 10));
+
+  let fullIcon = '❤️';
+  let emptyIcon = '🖤';
+
+  if (currentTheme === 'pink') {
+    fullIcon = isLunch ? '🍓' : '💖';
+    emptyIcon = isLunch ? '🤍' : '🤍';
+  } else if (currentTheme === 'minimal') {
+    fullIcon = isLunch ? '🥪' : '●';
+    emptyIcon = isLunch ? '○' : '○';
   } else {
-    // Render 10 hearts
-    const remainingHearts = Math.min(10, Math.ceil((status.minsRemaining / (status.totalDuration || 105)) * 10));
-    let html = '';
-    for (let i = 0; i < 10; i++) {
-      html += i < remainingHearts ? '❤️' : '🖤';
-    }
-    container.innerHTML = html;
+    // Minecraft theme
+    fullIcon = isLunch ? '🍗' : '❤️';
+    emptyIcon = isLunch ? '🦴' : '🖤';
   }
+
+  let html = '';
+  for (let i = 0; i < 10; i++) {
+    html += i < remainingCount ? fullIcon : emptyIcon;
+  }
+  container.innerHTML = html;
 }
 
 function renderTodayScheduleList(dayName) {
@@ -2113,17 +2127,30 @@ function renderWeeklyTimetableModal() {
 function tickRealtimeClock() {
   const clock = document.getElementById('currentTimeText');
   const dayNightIcon = document.getElementById('dayNightIcon');
+  let currentHour = 12;
 
   if (isSimulatorMode) {
+    currentHour = simHours;
     const h12 = simHours % 12 === 0 ? 12 : simHours % 12;
     const p = simHours < 12 ? 'AM' : 'PM';
     clock.textContent = `[SIM] ${h12}:${simMinutes.toString().padStart(2, '0')} ${p}`;
     dayNightIcon.textContent = (simHours >= 6 && simHours < 18) ? '☀️' : '🌙';
   } else {
     const now = new Date();
+    currentHour = now.getHours();
     clock.textContent = now.toLocaleTimeString();
-    const h = now.getHours();
-    dayNightIcon.textContent = (h >= 6 && h < 18) ? '☀️' : '🌙';
+    dayNightIcon.textContent = (currentHour >= 6 && currentHour < 18) ? '☀️' : '🌙';
+  }
+
+  // Update dynamic day/night ambient sky lighting
+  updateDayNightLighting(currentHour);
+
+  // Trigger luxury chronograph ticker micro-pulse
+  const countdownTimer = document.getElementById('countdownTimer');
+  if (countdownTimer) {
+    countdownTimer.classList.remove('tick-pulse');
+    void countdownTimer.offsetWidth; // trigger reflow
+    countdownTimer.classList.add('tick-pulse');
   }
 
   updateDashboard();
@@ -2136,9 +2163,119 @@ function tickRealtimeClock() {
 }
 
 // ==========================================
+// 6.5. THEME MANAGER (MINECRAFT / MINIMAL / CUTE PINK)
+// ==========================================
+function applyTheme(themeName, showFeedback = true) {
+  if (!['minecraft', 'minimal', 'pink'].includes(themeName)) {
+    themeName = 'minecraft';
+  }
+  currentTheme = themeName;
+  localStorage.setItem('sst_ui_theme', themeName);
+  document.body.setAttribute('data-theme', themeName);
+
+  // Trigger smooth portal transition curtain
+  const curtain = document.getElementById('themeCurtain');
+  if (curtain) {
+    curtain.classList.add('active');
+    setTimeout(() => {
+      curtain.classList.remove('active');
+    }, 240);
+  }
+
+  // Update theme logo icon and header titles
+  const themeLogoIcon = document.getElementById('themeLogoIcon');
+  const appTitle = document.getElementById('appTitleText');
+  const appSubtitle = document.getElementById('appSubtitleText');
+
+  if (themeName === 'pink') {
+    if (themeLogoIcon) themeLogoIcon.textContent = '🌸';
+    if (appTitle) appTitle.textContent = 'SST STUDY HUB ✨';
+    if (appSubtitle) appSubtitle.textContent = 'CUTE SCHEDULE TRACKER 🎀';
+  } else if (themeName === 'minimal') {
+    if (themeLogoIcon) themeLogoIcon.textContent = '⚡';
+    if (appTitle) appTitle.textContent = 'SST SCHEDULE';
+    if (appSubtitle) appSubtitle.textContent = 'LIVE COLLEGE TIMETABLE';
+  } else {
+    if (themeLogoIcon) themeLogoIcon.textContent = '🟩';
+    if (appTitle) appTitle.textContent = 'SST CRAFT';
+    if (appSubtitle) appSubtitle.textContent = 'COLLEGE SCHEDULE & LIVE TRACKER';
+  }
+
+  // Update modal cards active state
+  document.querySelectorAll('.theme-card').forEach((card) => {
+    const choice = card.dataset.themeChoice;
+    if (choice === themeName) {
+      card.classList.add('active');
+      card.setAttribute('aria-pressed', 'true');
+    } else {
+      card.classList.remove('active');
+      card.setAttribute('aria-pressed', 'false');
+    }
+  });
+
+  // Re-render ambient particles for the new theme
+  if (typeof resetParticlesForTheme === 'function') {
+    resetParticlesForTheme();
+  }
+
+  // Re-render UI components with theme-specific nuances
+  updateDashboard();
+
+  if (showFeedback) {
+    playThemeSound('portal');
+    const names = {
+      minecraft: 'Minecraft UI 🟩',
+      minimal: 'Minimal Clean UI ⚡',
+      pink: 'Cute Pink UI 🌸'
+    };
+    showToast(`Switched to ${names[themeName] || themeName}!`);
+  }
+}
+
+// ==========================================
 // 7. EVENT LISTENERS & CONTROLS
 // ==========================================
 function setupUIEventListeners() {
+  // Theme Modal controls
+  const themeModal = document.getElementById('themeModal');
+  const themeSwitchBtn = document.getElementById('themeSwitchBtn');
+  const closeThemeModalBtn = document.getElementById('closeThemeModalBtn');
+
+  if (themeSwitchBtn) {
+    themeSwitchBtn.addEventListener('click', () => {
+      playMinecraftSound();
+      if (themeModal) themeModal.classList.add('open');
+    });
+  }
+
+  if (closeThemeModalBtn) {
+    closeThemeModalBtn.addEventListener('click', () => {
+      playMinecraftSound();
+      if (themeModal) themeModal.classList.remove('open');
+    });
+  }
+
+  if (themeModal) {
+    themeModal.addEventListener('click', (e) => {
+      if (e.target === themeModal) {
+        themeModal.classList.remove('open');
+      }
+    });
+  }
+
+  // Theme option cards selection
+  document.querySelectorAll('.theme-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      const chosen = card.dataset.themeChoice;
+      if (chosen) {
+        applyTheme(chosen, true);
+        setTimeout(() => {
+          if (themeModal) themeModal.classList.remove('open');
+        }, 250);
+      }
+    });
+  });
+
   // Notification buttons
   document.getElementById('enableNotifBtn').addEventListener('click', requestNotificationPermission);
   document.getElementById('testNotifBtn').addEventListener('click', () => {
@@ -2293,7 +2430,7 @@ function setupGroupButtons() {
 }
 
 // ==========================================
-// 8. MINECRAFT AUDIO SYNTHESIZER
+// 8. MULTI-THEME AUDIO SYNTHESIZERS
 // ==========================================
 function initAudio() {
   try {
@@ -2306,30 +2443,368 @@ function initAudio() {
   }
 }
 
-function playMinecraftSound() {
+function playThemeSound(type = 'click') {
   if (!soundEnabled) return;
   try {
     if (!audioCtx) initAudio();
     if (!audioCtx) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    const t = audioCtx.currentTime;
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.08);
+    if (type === 'portal') {
+      // Atmospheric portal shimmer sweep
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(260, t);
+      osc.frequency.exponentialRampToValueAtTime(840, t + 0.22);
+      gain.gain.setValueAtTime(0.18, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.22);
+      return;
+    }
 
-    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.08);
+    if (currentTheme === 'pink') {
+      // Whimsical fairy bell arpeggio (3 crystalline pentatonic notes)
+      const notes = [587.33, 739.99, 880.00]; // D5, F#5, A5
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t + i * 0.035);
+        gain.gain.setValueAtTime(0.14, t + i * 0.035);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.035 + 0.16);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t + i * 0.035);
+        osc.stop(t + i * 0.035 + 0.16);
+      });
+    } else if (currentTheme === 'minimal') {
+      // Crisp high-tech glass tap
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(950, t);
+      osc.frequency.exponentialRampToValueAtTime(450, t + 0.04);
+      gain.gain.setValueAtTime(0.15, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.04);
+    } else {
+      // Minecraft classic 8-bit blocky snap
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, t);
+      osc.frequency.exponentialRampToValueAtTime(110, t + 0.08);
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.08);
+    }
   } catch (err) {
     // Ignore audio autoplay restrictions
+  }
+}
+
+function playMinecraftSound() {
+  playThemeSound('click');
+}
+
+// ==========================================
+// 9. DYNAMIC DAY/NIGHT SKY LIGHTING
+// ==========================================
+function updateDayNightLighting(hours) {
+  const skyOverlay = document.getElementById('skyOverlay');
+  if (!skyOverlay) return;
+
+  let timePhase = 'sky-night';
+  if (hours >= 6 && hours < 12) {
+    timePhase = 'sky-morning';
+  } else if (hours >= 12 && hours < 17) {
+    timePhase = 'sky-afternoon';
+  } else if (hours >= 17 && hours < 20) {
+    timePhase = 'sky-evening';
+  } else {
+    timePhase = 'sky-night';
+  }
+
+  if (!skyOverlay.classList.contains(timePhase)) {
+    skyOverlay.className = `ambient-sky-gradient ${timePhase}`;
+    document.body.setAttribute('data-lighting', timePhase);
+  }
+}
+
+// ==========================================
+// 10. AMBIENT PARTICLE CANVAS ENGINE
+// ==========================================
+let ambientCanvas = null;
+let ambientCtx = null;
+let ambientParticles = [];
+let animFrameId = null;
+
+function initAmbientEngine() {
+  ambientCanvas = document.getElementById('ambientCanvas');
+  if (!ambientCanvas) return;
+  ambientCtx = ambientCanvas.getContext('2d');
+  resizeAmbientCanvas();
+  window.addEventListener('resize', resizeAmbientCanvas);
+  resetParticlesForTheme();
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  renderAmbientParticles();
+}
+
+function resizeAmbientCanvas() {
+  if (!ambientCanvas) return;
+  ambientCanvas.width = window.innerWidth;
+  ambientCanvas.height = window.innerHeight;
+}
+
+function resetParticlesForTheme() {
+  ambientParticles = [];
+  const w = window.innerWidth || 1200;
+  const h = window.innerHeight || 800;
+
+  if (currentTheme === 'pink') {
+    // Ultra-rare, serene drift: only 4 delicate sakura petals + 2 subtle sparkles
+    for (let i = 0; i < 4; i++) {
+      ambientParticles.push({
+        type: 'sakura',
+        x: Math.random() * w,
+        y: Math.random() * h,
+        size: 5 + Math.random() * 4,
+        speedY: 0.22 + Math.random() * 0.28,
+        swaySpeed: 0.01 + Math.random() * 0.014,
+        swayRange: 0.8 + Math.random() * 1.0,
+        sway: Math.random() * Math.PI * 2,
+        angle: Math.random() * Math.PI * 2,
+        angSpeed: (Math.random() - 0.5) * 0.015,
+        color: ['#f472b6', '#fbcfe8', '#fda4af', '#f43f5e'][Math.floor(Math.random() * 4)]
+      });
+    }
+    for (let i = 0; i < 2; i++) {
+      ambientParticles.push({
+        type: 'sparkle',
+        x: Math.random() * w,
+        y: Math.random() * h,
+        size: 1.5 + Math.random() * 1.5,
+        alpha: Math.random(),
+        alphaSpeed: 0.008 + Math.random() * 0.01
+      });
+    }
+  } else if (currentTheme === 'minimal') {
+    // 40 Geometric Constellation Nodes
+    for (let i = 0; i < 40; i++) {
+      ambientParticles.push({
+        type: 'node',
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.45,
+        vy: (Math.random() - 0.5) * 0.45,
+        radius: 1.5 + Math.random() * 2,
+        color: Math.random() > 0.5 ? 'rgba(56, 189, 248, 0.4)' : 'rgba(129, 140, 248, 0.35)'
+      });
+    }
+  } else {
+    // Minecraft: 35 Floating Torch Embers + 4 Drifting Pixel Clouds
+    for (let i = 0; i < 35; i++) {
+      ambientParticles.push({
+        type: 'ember',
+        x: Math.random() * w,
+        y: h - Math.random() * (h * 0.8),
+        size: Math.floor(2 + Math.random() * 3),
+        speedY: 0.5 + Math.random() * 1.2,
+        sway: Math.random() * Math.PI * 2,
+        color: ['#ffaa00', '#ffd700', '#ff5500', '#ff7700'][Math.floor(Math.random() * 4)],
+        life: Math.random() * 100,
+        maxLife: 80 + Math.random() * 80
+      });
+    }
+    for (let i = 0; i < 4; i++) {
+      ambientParticles.push({
+        type: 'cloud',
+        x: Math.random() * w,
+        y: 20 + i * 65 + Math.random() * 30,
+        width: 120 + Math.random() * 100,
+        height: 24 + Math.random() * 16,
+        speedX: 0.2 + Math.random() * 0.25
+      });
+    }
+  }
+}
+
+function renderAmbientParticles() {
+  if (!ambientCtx || !ambientCanvas) return;
+  const w = ambientCanvas.width;
+  const h = ambientCanvas.height;
+
+  ambientCtx.clearRect(0, 0, w, h);
+
+  if (currentTheme === 'pink') {
+    ambientParticles.forEach((p) => {
+      if (p.type === 'sakura') {
+        p.y += p.speedY;
+        p.sway += p.swaySpeed;
+        p.x += Math.sin(p.sway) * p.swayRange;
+        p.angle += p.angSpeed;
+
+        if (p.y > h + 20) { p.y = -20; p.x = Math.random() * w; }
+        if (p.x > w + 20) p.x = -20;
+        if (p.x < -20) p.x = w + 20;
+
+        ambientCtx.save();
+        ambientCtx.translate(p.x, p.y);
+        ambientCtx.rotate(p.angle);
+        ambientCtx.fillStyle = p.color;
+        ambientCtx.globalAlpha = 0.38;
+        ambientCtx.beginPath();
+        ambientCtx.ellipse(0, 0, p.size * 0.6, p.size, 0, 0, Math.PI * 2);
+        ambientCtx.fill();
+        ambientCtx.restore();
+      } else if (p.type === 'sparkle') {
+        p.alpha += p.alphaSpeed;
+        if (p.alpha > 1 || p.alpha < 0) p.alphaSpeed = -p.alphaSpeed;
+        ambientCtx.save();
+        ambientCtx.fillStyle = '#ffd700';
+        ambientCtx.globalAlpha = Math.max(0, Math.min(1, p.alpha)) * 0.7;
+        drawSparkleStar(ambientCtx, p.x, p.y, p.size);
+        ambientCtx.restore();
+      }
+    });
+  } else if (currentTheme === 'minimal') {
+    // Draw constellation lines
+    for (let i = 0; i < ambientParticles.length; i++) {
+      for (let j = i + 1; j < ambientParticles.length; j++) {
+        const dx = ambientParticles[i].x - ambientParticles[j].x;
+        const dy = ambientParticles[i].y - ambientParticles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 100) {
+          ambientCtx.strokeStyle = `rgba(56, 189, 248, ${0.15 * (1 - dist / 100)})`;
+          ambientCtx.lineWidth = 1;
+          ambientCtx.beginPath();
+          ambientCtx.moveTo(ambientParticles[i].x, ambientParticles[i].y);
+          ambientCtx.lineTo(ambientParticles[j].x, ambientParticles[j].y);
+          ambientCtx.stroke();
+        }
+      }
+    }
+
+    ambientParticles.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0 || p.x > w) p.vx = -p.vx;
+      if (p.y < 0 || p.y > h) p.vy = -p.vy;
+
+      ambientCtx.beginPath();
+      ambientCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ambientCtx.fillStyle = p.color;
+      ambientCtx.fill();
+    });
+  } else {
+    // Minecraft Theme
+    ambientParticles.forEach((p) => {
+      if (p.type === 'cloud') {
+        p.x += p.speedX;
+        if (p.x > w + p.width) p.x = -p.width;
+        ambientCtx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ambientCtx.fillRect(Math.floor(p.x), Math.floor(p.y), p.width, p.height);
+      } else if (p.type === 'ember') {
+        p.y -= p.speedY;
+        p.sway += 0.03;
+        p.x += Math.sin(p.sway) * 0.4;
+        p.life++;
+
+        if (p.y < 0 || p.life > p.maxLife) {
+          p.y = h + 10;
+          p.x = Math.random() * w;
+          p.life = 0;
+        }
+
+        const alpha = Math.max(0, 1 - p.life / p.maxLife);
+        ambientCtx.fillStyle = p.color;
+        ambientCtx.globalAlpha = alpha * 0.8;
+        ambientCtx.fillRect(Math.floor(p.x), Math.floor(p.y), p.size, p.size);
+      }
+    });
+  }
+
+  animFrameId = requestAnimationFrame(renderAmbientParticles);
+}
+
+function drawSparkleStar(ctx, cx, cy, r) {
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r * 2);
+  ctx.lineTo(cx + r * 0.5, cy - r * 0.5);
+  ctx.lineTo(cx + r * 2, cy);
+  ctx.lineTo(cx + r * 0.5, cy + r * 0.5);
+  ctx.lineTo(cx, cy + r * 2);
+  ctx.lineTo(cx - r * 0.5, cy + r * 0.5);
+  ctx.lineTo(cx - r * 2, cy);
+  ctx.lineTo(cx - r * 0.5, cy - r * 0.5);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// ==========================================
+// 11. CLICK MICRO-INTERACTIONS (RIPPLE & SPARKLES)
+// ==========================================
+function attachMicroInteractions() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button, .mc-btn, .mc-group-btn, .mc-logo-block, .theme-card, .mc-schedule-slot');
+    if (btn) {
+      createButtonRipple(btn, e);
+      createClickParticles(e.clientX, e.clientY);
+    }
+  });
+}
+
+function createButtonRipple(btn, e) {
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'btn-ripple';
+  const size = Math.max(rect.width, rect.height) * 2;
+  ripple.style.width = ripple.style.height = `${size}px`;
+  ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+  ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+function createClickParticles(x, y) {
+  const particleCount = 5;
+  const emojis = {
+    minecraft: ['🟩', '🟢', '⛏️', '💎', '✨'],
+    minimal: ['⚡', '✦', '💠', '🔹', '•'],
+    pink: ['💖', '🌸', '🎀', '✨', '🍓']
+  }[currentTheme] || ['✨', '⭐'];
+
+  for (let i = 0; i < particleCount; i++) {
+    const p = document.createElement('span');
+    p.className = 'click-particle';
+    p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    p.style.left = `${x}px`;
+    p.style.top = `${y}px`;
+
+    const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+    const dist = 35 + Math.random() * 45;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist - 15;
+    const rot = (Math.random() - 0.5) * 180;
+
+    p.style.setProperty('--tx', `${tx}px`);
+    p.style.setProperty('--ty', `${ty}px`);
+    p.style.setProperty('--rot', `${rot}deg`);
+
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 800);
   }
 }
 
@@ -2344,3 +2819,4 @@ function showToast(msg) {
     toast.classList.remove('show');
   }, 3000);
 }
+

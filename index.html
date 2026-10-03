@@ -12,25 +12,34 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="manifest" href="manifest.json">
   
-  <!-- Google Fonts: Press Start 2P -->
+  <!-- Google Fonts: Press Start 2P (Minecraft), Plus Jakarta Sans (Minimal), Fredoka (Cute Pink) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
   
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- DYNAMIC AMBIENT LIGHTING & CANVAS PARTICLE ENGINE -->
+  <div class="ambient-sky-gradient" id="skyOverlay" aria-hidden="true"></div>
+  <div class="ambient-aurora" id="auroraOverlay" aria-hidden="true"></div>
+  <canvas id="ambientCanvas" aria-hidden="true"></canvas>
+  <div class="theme-transition-curtain" id="themeCurtain" aria-hidden="true"></div>
+
   <div class="mc-container">
     
     <!-- HEADER -->
     <header class="mc-header">
       <div class="mc-header-content">
         <div class="mc-title-group">
-          <div class="mc-logo-block" id="appLogo" title="SST Craft Grass Block">🟩</div>
+          <button class="mc-logo-block" id="themeSwitchBtn" title="Click to Change Theme (Minecraft / Minimal / Cute Pink)" aria-label="Change UI Theme">
+            <span id="themeLogoIcon">🟩</span>
+            <span class="theme-gear-hint" title="Switch Theme">🎨</span>
+          </button>
           <div>
-            <h1 class="mc-title">SST CRAFT</h1>
-            <div class="mc-subtitle">COLLEGE SCHEDULE & LIVE TRACKER</div>
+            <h1 class="mc-title" id="appTitleText">SST CRAFT</h1>
+            <div class="mc-subtitle" id="appSubtitleText">COLLEGE SCHEDULE & LIVE TRACKER</div>
           </div>
         </div>
         
@@ -281,6 +290,81 @@
               <!-- Rendered by JS -->
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEME SELECTION MODAL -->
+  <div class="mc-modal-overlay" id="themeModal" role="dialog" aria-modal="true" aria-labelledby="themeModalTitle">
+    <div class="mc-modal-content theme-modal-box">
+      <div class="mc-modal-header">
+        <div class="mc-modal-title" id="themeModalTitle">
+          <span>🎨</span> CHOOSE YOUR UI THEME
+        </div>
+        <button id="closeThemeModalBtn" class="mc-btn mc-btn-red" style="padding: 6px 12px; font-size: 10px;" aria-label="Close">
+          ✕
+        </button>
+      </div>
+      <div class="mc-modal-body theme-modal-body">
+        <div class="theme-modal-intro">
+          Select your favorite interface style. Every theme retains all Google Sheets syncing, live timers, sticky notifications, and group choices!
+        </div>
+
+        <div class="theme-options-grid">
+          <!-- Option 1: Minecraft UI -->
+          <div class="theme-card active" data-theme-choice="minecraft" id="themeCardMinecraft" tabindex="0" role="button" aria-pressed="true">
+            <div class="theme-card-top">
+              <span class="theme-card-badge badge-mc">RETRO 8-BIT</span>
+              <span class="theme-active-tag">✓ ACTIVE</span>
+            </div>
+            <div class="theme-card-icon">🟩</div>
+            <h3 class="theme-card-name">Minecraft UI</h3>
+            <p class="theme-card-info">Authentic pixel-art, 'Press Start 2P' typography, 3D blocky borders, boss bar, XP countdown & 8-bit sounds.</p>
+            <div class="theme-card-swatches">
+              <span class="swatch swatch-mc-1"></span>
+              <span class="swatch swatch-mc-2"></span>
+              <span class="swatch swatch-mc-3"></span>
+              <span class="swatch swatch-mc-4"></span>
+            </div>
+            <button class="mc-btn theme-apply-btn">APPLY MINECRAFT</button>
+          </div>
+
+          <!-- Option 2: Minimal Clean UI -->
+          <div class="theme-card" data-theme-choice="minimal" id="themeCardMinimal" tabindex="0" role="button" aria-pressed="false">
+            <div class="theme-card-top">
+              <span class="theme-card-badge badge-min">MODERN PRO</span>
+              <span class="theme-active-tag">✓ ACTIVE</span>
+            </div>
+            <div class="theme-card-icon">⚡</div>
+            <h3 class="theme-card-name">Minimal Clean UI</h3>
+            <p class="theme-card-info">Sleek Plus Jakarta Sans font, dark titanium glassmorphism, smooth pill badges, glowing borders & clean charts.</p>
+            <div class="theme-card-swatches">
+              <span class="swatch swatch-min-1"></span>
+              <span class="swatch swatch-min-2"></span>
+              <span class="swatch swatch-min-3"></span>
+              <span class="swatch swatch-min-4"></span>
+            </div>
+            <button class="mc-btn theme-apply-btn">APPLY MINIMAL</button>
+          </div>
+
+          <!-- Option 3: Cute Pink UI -->
+          <div class="theme-card" data-theme-choice="pink" id="themeCardPink" tabindex="0" role="button" aria-pressed="false">
+            <div class="theme-card-top">
+              <span class="theme-card-badge badge-pink">CUTE PASTEL 🌸</span>
+              <span class="theme-active-tag">✓ ACTIVE</span>
+            </div>
+            <div class="theme-card-icon">🌸</div>
+            <h3 class="theme-card-name">Cute Pink UI</h3>
+            <p class="theme-card-info">Adorable pastel strawberry milk aesthetic for girls, bubbly Fredoka font, sparkles ✨, bows 🎀 & sweet heart meters.</p>
+            <div class="theme-card-swatches">
+              <span class="swatch swatch-pink-1"></span>
+              <span class="swatch swatch-pink-2"></span>
+              <span class="swatch swatch-pink-3"></span>
+              <span class="swatch swatch-pink-4"></span>
+            </div>
+            <button class="mc-btn theme-apply-btn">APPLY CUTE PINK</button>
+          </div>
         </div>
       </div>
     </div>
