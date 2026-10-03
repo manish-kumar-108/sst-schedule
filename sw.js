@@ -1,5 +1,5 @@
 // Service Worker for SST Schedule App (Minecraft Edition)
-const CACHE_NAME = 'sst-craft-v2';
+const CACHE_NAME = 'sst-craft-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -47,12 +47,12 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event: Network-first for dynamic sheets, Cache-first for local assets
+// Fetch event: Network-first for dynamic sheets & Supabase, Cache-first for local assets
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // If requesting Google Sheets, try network first, then return offline fallback
-  if (url.hostname.includes('google') || url.hostname.includes('sheets')) {
+  // If requesting Google Sheets or Supabase Auth API, try network first
+  if (url.hostname.includes('google') || url.hostname.includes('sheets') || url.hostname.includes('supabase.co')) {
     event.respondWith(
       fetch(event.request).catch(() => {
         return caches.match(event.request);

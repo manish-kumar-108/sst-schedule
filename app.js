@@ -1333,6 +1333,263 @@ const SHEET_TAB = '[Aug26-Oct26] Weekly Schedule';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
 const JSONP_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=responseHandler:window.onGoogleSheetJSONP&sheet=${encodeURIComponent(SHEET_TAB)}`;
 
+// ==========================================
+// 0. SUPABASE AUTH & SCALER ACCESS GATE
+// ==========================================
+const SUPABASE_URL = 'https://mjinpcwoqqasrewoigeh.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_pVX9u0sdPiTsZ5WKPeZeUg_PTH548ZC';
+let supabaseClient = null;
+let currentUser = null;
+
+function initSupabase() {
+  if (window.supabase && typeof window.supabase.createClient === 'function') {
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          storage: window.localStorage
+        }
+      });
+      console.log('[Supabase] Initialized client successfully');
+    } catch (e) {
+      console.error('[Supabase] Initialization error:', e);
+    }
+  } else {
+    console.warn('[Supabase] Library not found on window, retrying in 400ms...');
+    setTimeout(initSupabase, 400);
+  }
+}
+
+function isAllowedScalerEmail(email) {
+  if (!email || typeof email !== 'string') return false;
+  const normalized = email.toLowerCase().trim();
+  return normalized.endsWith('@scaler.com') || normalized.endsWith('@sst.scaler.com');
+}
+
+async function checkAuthSession() {
+  if (!supabaseClient) {
+    showLoginPage();
+    return;
+  }
+
+  // Check URL error parameters (e.g. user canceled Google OAuth or domain rejected)
+  const urlParams = new URLSearchParams(window.location.search);
+  const errorMsg = urlParams.get('error_description') || urlParams.get('error');
+  if (errorMsg) {
+    showLoginAlert(decodeURIComponent(errorMsg), 'error', 'Google Sign-In Notice');
+    showLoginPage();
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+
+  try {
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    if (session && session.user) {
+      await validateAndApplyUser(session.user);
+    } else {
+      showLoginPage();
+    }
+  } catch (err) {
+    console.warn('[Supabase] Error checking session:', err);
+    showLoginPage();
+  }
+
+  // Subscribe to auth state updates
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    console.log('[Supabase Auth Event]', event);
+    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+      if (session && session.user) {
+        await validateAndApplyUser(session.user);
+      }
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      showLoginPage();
+    }
+  });
+}
+
+async function validateAndApplyUser(user) {
+  const email = (user.email || '').toLowerCase().trim();
+
+  // Strict Scaler Domain Enforcement (@scaler.com or @sst.scaler.com)
+  if (!isAllowedScalerEmail(email)) {
+    console.warn('[Supabase Auth] Access denied for non-scaler email:', email);
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    showLoginAlert(
+      `Access Denied: Only official Scaler accounts (@scaler.com or @sst.scaler.com) are permitted. You signed in as "${email}".`,
+      'error',
+      'Unauthorized Email'
+    );
+    showLoginPage();
+    return;
+  }
+
+  // Authorized Scaler user!
+  currentUser = user;
+  hideLoginPage();
+  updateUserProfileUI(user);
+}
+
+function showLoginPage() {
+  const loginPortal = document.getElementById('loginPortal');
+  const mainApp = document.getElementById('mainAppContainer');
+  if (loginPortal) loginPortal.style.display = 'flex';
+  if (mainApp) mainApp.style.display = 'none';
+}
+
+function hideLoginPage() {
+  const loginPortal = document.getElementById('loginPortal');
+  const mainApp = document.getElementById('mainAppContainer');
+  if (loginPortal) loginPortal.style.display = 'none';
+  if (mainApp) mainApp.style.display = 'block';
+}
+
+function showLoginAlert(message, type = 'info', title = '') {
+  const alertBox = document.getElementById('loginAlertBox');
+  const alertIcon = document.getElementById('loginAlertIcon');
+  const alertTitle = document.getElementById('loginAlertTitle');
+  const alertText = document.getElementById('loginAlertText');
+  if (!alertBox || !alertText) return;
+
+  alertBox.className = `login-alert alert-${type}`;
+  alertBox.style.display = 'flex';
+
+  const icons = {
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️',
+    success: '✅'
+  };
+  if (alertIcon) alertIcon.textContent = icons[type] || 'ℹ️';
+  if (alertTitle) {
+    alertTitle.textContent = title || (type === 'error' ? 'Error' : type === 'warning' ? 'Notice' : type === 'success' ? 'Success' : 'Info');
+  }
+  alertText.textContent = message;
+}
+
+async function handleGoogleLogin() {
+  if (!supabaseClient) {
+    showLoginAlert('Supabase client is connecting. Please check your network and try again in a few seconds.', 'error', 'Network Error');
+    return;
+  }
+
+  showLoginAlert('Opening Google Sign-In with Scaler authentication...', 'info', 'Redirecting');
+
+  // Strip hash / query params for clean redirect
+  const redirectUrl = window.location.origin + window.location.pathname;
+
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        queryParams: {
+          hd: 'scaler.com',
+          prompt: 'select_account'
+        },
+        redirectTo: redirectUrl
+      }
+    });
+
+    if (error) {
+      console.error('[Google OAuth Error]', error);
+      if (error.message && (error.message.includes('not enabled') || error.message.includes('Unsupported provider'))) {
+        showLoginAlert(
+          'Google Provider is not enabled in your Supabase dashboard yet. Please go to your Supabase project > Authentication > Providers > Google, enable it, and add your Google Client ID & Secret.',
+          'warning',
+          'Google Setup Required'
+        );
+      } else {
+        showLoginAlert(error.message || 'Failed to authenticate with Google.', 'error', 'Sign-In Failed');
+      }
+    }
+  } catch (err) {
+    console.error('[Google OAuth Exception]', err);
+    showLoginAlert(err.message || 'Unexpected login error occurred.', 'error', 'Error');
+  }
+}
+
+async function handleScalerEmailLogin(email) {
+  if (!supabaseClient) {
+    showLoginAlert('Supabase client is not ready. Please try again in a moment.', 'error', 'Connection Error');
+    return;
+  }
+
+  const cleanEmail = (email || '').toLowerCase().trim();
+  if (!isAllowedScalerEmail(cleanEmail)) {
+    showLoginAlert(
+      'Access Denied: Only official Scaler emails (@scaler.com or @sst.scaler.com) are permitted.',
+      'error',
+      'Restricted Domain'
+    );
+    return;
+  }
+
+  showLoginAlert(`Sending secure login link to ${cleanEmail}...`, 'info', 'Sending Link');
+
+  const redirectUrl = window.location.origin + window.location.pathname;
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithOtp({
+      email: cleanEmail,
+      options: {
+        emailRedirectTo: redirectUrl
+      }
+    });
+
+    if (error) {
+      showLoginAlert(error.message, 'error', 'Sign-In Failed');
+    } else {
+      showLoginAlert(
+        `Magic login link sent to ${cleanEmail}! Please check your email inbox and click the link to access your SST Schedule.`,
+        'success',
+        'Check Your Email'
+      );
+    }
+  } catch (err) {
+    showLoginAlert(err.message || 'Failed to send magic link.', 'error', 'Error');
+  }
+}
+
+function updateUserProfileUI(user) {
+  const pill = document.getElementById('userProfilePill');
+  const avatarImg = document.getElementById('userAvatarImg');
+  const emailText = document.getElementById('userEmailText');
+  if (!pill) return;
+
+  pill.style.display = 'flex';
+  const meta = user.user_metadata || {};
+  const avatarUrl = meta.avatar_url || meta.picture || '';
+  const fullName = meta.full_name || meta.name || user.email.split('@')[0];
+
+  if (avatarImg) {
+    if (avatarUrl) {
+      avatarImg.src = avatarUrl;
+    } else {
+      avatarImg.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`;
+    }
+    avatarImg.alt = fullName;
+  }
+
+  if (emailText) {
+    emailText.textContent = user.email;
+    emailText.title = `Signed in as ${user.email} (${fullName})`;
+  }
+}
+
+async function handleLogout() {
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
+  currentUser = null;
+  const pill = document.getElementById('userProfilePill');
+  if (pill) pill.style.display = 'none';
+  showToast('Signed out of Scaler Portal');
+  showLoginAlert('You have signed out. Please sign in with your official Scaler account to continue.', 'info', 'Signed Out');
+  showLoginPage();
+}
+
 // State Variables
 let currentGroup = localStorage.getItem('sst_schedule_group') || 'A';
 let currentTheme = localStorage.getItem('sst_ui_theme') || 'minecraft';
@@ -1353,6 +1610,7 @@ let audioCtx = null;
 // 2. INITIALIZATION
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
+  initSupabase();
   initScheduleData();
   applyTheme(currentTheme, false);
   setupUIEventListeners();
@@ -1362,6 +1620,7 @@ window.addEventListener('DOMContentLoaded', () => {
   attachMicroInteractions();
   registerServiceWorker();
   checkNotificationStatus();
+  checkAuthSession();
   
   // Start main loop immediately
   tickRealtimeClock();
@@ -2186,19 +2445,35 @@ function applyTheme(themeName, showFeedback = true) {
   const themeLogoIcon = document.getElementById('themeLogoIcon');
   const appTitle = document.getElementById('appTitleText');
   const appSubtitle = document.getElementById('appSubtitleText');
+  const loginThemeIcon = document.getElementById('loginThemeIcon');
+  const loginThemeName = document.getElementById('loginThemeName');
+  const loginHeroEmoji = document.getElementById('loginHeroEmoji');
+  const loginTitleText = document.getElementById('loginTitleText');
 
   if (themeName === 'pink') {
     if (themeLogoIcon) themeLogoIcon.textContent = '🌸';
     if (appTitle) appTitle.textContent = 'SST STUDY HUB ✨';
     if (appSubtitle) appSubtitle.textContent = 'CUTE SCHEDULE TRACKER 🎀';
+    if (loginThemeIcon) loginThemeIcon.textContent = '🌸';
+    if (loginThemeName) loginThemeName.textContent = 'Pink UI';
+    if (loginHeroEmoji) loginHeroEmoji.textContent = '🌸';
+    if (loginTitleText) loginTitleText.textContent = 'SST STUDY HUB ✨';
   } else if (themeName === 'minimal') {
     if (themeLogoIcon) themeLogoIcon.textContent = '⚡';
     if (appTitle) appTitle.textContent = 'SST SCHEDULE';
     if (appSubtitle) appSubtitle.textContent = 'LIVE COLLEGE TIMETABLE';
+    if (loginThemeIcon) loginThemeIcon.textContent = '⚡';
+    if (loginThemeName) loginThemeName.textContent = 'Minimal';
+    if (loginHeroEmoji) loginHeroEmoji.textContent = '⚡';
+    if (loginTitleText) loginTitleText.textContent = 'SST SCHEDULE';
   } else {
     if (themeLogoIcon) themeLogoIcon.textContent = '🟩';
     if (appTitle) appTitle.textContent = 'SST CRAFT';
     if (appSubtitle) appSubtitle.textContent = 'COLLEGE SCHEDULE & LIVE TRACKER';
+    if (loginThemeIcon) loginThemeIcon.textContent = '🟩';
+    if (loginThemeName) loginThemeName.textContent = 'Minecraft';
+    if (loginHeroEmoji) loginHeroEmoji.textContent = '⛏️';
+    if (loginTitleText) loginTitleText.textContent = 'SST SCHEDULE TRACKER';
   }
 
   // Update modal cards active state
@@ -2240,17 +2515,25 @@ function setupUIEventListeners() {
   const themeModal = document.getElementById('themeModal');
   const themeSwitchBtn = document.getElementById('themeSwitchBtn');
   const closeThemeModalBtn = document.getElementById('closeThemeModalBtn');
+  const loginThemeSwitchBtn = document.getElementById('loginThemeSwitchBtn');
 
   if (themeSwitchBtn) {
     themeSwitchBtn.addEventListener('click', () => {
-      playMinecraftSound();
+      playThemeSound('click');
+      if (themeModal) themeModal.classList.add('open');
+    });
+  }
+
+  if (loginThemeSwitchBtn) {
+    loginThemeSwitchBtn.addEventListener('click', () => {
+      playThemeSound('click');
       if (themeModal) themeModal.classList.add('open');
     });
   }
 
   if (closeThemeModalBtn) {
     closeThemeModalBtn.addEventListener('click', () => {
-      playMinecraftSound();
+      playThemeSound('click');
       if (themeModal) themeModal.classList.remove('open');
     });
   }
@@ -2260,6 +2543,35 @@ function setupUIEventListeners() {
       if (e.target === themeModal) {
         themeModal.classList.remove('open');
       }
+    });
+  }
+
+  // Google Login Button
+  const googleLoginBtn = document.getElementById('googleLoginBtn');
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      handleGoogleLogin();
+    });
+  }
+
+  // Scaler Email Form
+  const scalerEmailForm = document.getElementById('scalerEmailForm');
+  const scalerEmailInput = document.getElementById('scalerEmailInput');
+  if (scalerEmailForm && scalerEmailInput) {
+    scalerEmailForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      playThemeSound('click');
+      handleScalerEmailLogin(scalerEmailInput.value);
+    });
+  }
+
+  // Header Logout Button
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      handleLogout();
     });
   }
 
