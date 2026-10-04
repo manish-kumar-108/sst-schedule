@@ -189,6 +189,9 @@
           <button id="openAttendanceBtn" class="mc-btn mc-btn-purple" title="Scaler Attendance & Bunk Predictor" aria-label="Attendance">
             <span>📊</span> <span id="headerAttendanceText">ATTENDANCE</span>
           </button>
+          <button id="openMessBtn" class="mc-btn mc-btn-orange" title="SST Mess & Meal QR Pass (30s Live Refresh)" aria-label="Meal QR Pass">
+            <span>🍱</span> <span id="headerMessText">MEAL QR</span>
+          </button>
 
           <!-- User Profile & Logout Pill -->
           <div class="mc-user-pill" id="userProfilePill" style="display: none;">
@@ -339,6 +342,20 @@
             <span class="safety-icon" id="hudSafetyIcon">⚠️</span>
             <span class="safety-text" id="hudSafetyText">CRITICAL: Missing this class drops your attendance below 75%!</span>
           </div>
+        </div>
+
+        <!-- LIVE MESS MEAL STATUS HUD -->
+        <div class="mc-mess-hud" id="liveMessHud">
+          <div class="mess-hud-left">
+            <span class="mess-hud-icon" id="messHudIcon">🍱</span>
+            <div class="mess-hud-info">
+              <div class="mess-hud-title" id="messHudTitle">SST MESS: LUNCH ACTIVE</div>
+              <div class="mess-hud-sub" id="messHudSub">12:30 PM – 2:45 PM • The Chef Talk</div>
+            </div>
+          </div>
+          <button class="att-hud-link-btn mess-hud-open-btn" id="hudOpenMessBtn" type="button" title="Open Scaler Mess Meal Pass">
+            <span>⚡</span> MEAL QR PASS
+          </button>
         </div>
       </div>
 
@@ -670,6 +687,148 @@
           <div class="sim-result-card" id="simResultCard">
             <!-- Dynamic calculation output -->
           </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SST MESS MEAL QR MODAL (30S TOTP REFRESH)  -->
+  <!-- ========================================== -->
+  <div class="mc-modal-overlay" id="messModal" aria-modal="true" role="dialog" aria-label="SST Mess Meal QR Pass">
+    <div class="mc-modal-content mess-modal-box">
+      
+      <!-- Modal Header -->
+      <div class="mc-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">🍱</span>
+          <div>
+            <div class="mc-modal-title">SST MESS • MEAL QR PASS</div>
+            <div class="mc-modal-sub" id="messModalSubtitle">mess.sst-dashboard.com • Live 30s Dynamic Refresh</div>
+          </div>
+        </div>
+        <button class="mc-btn mc-btn-red" id="closeMessModalBtn" aria-label="Close Mess Modal">✕</button>
+      </div>
+
+      <div class="mc-modal-body">
+        
+        <!-- Top Status Banner -->
+        <div class="mess-status-banner" id="messStatusBanner">
+          <div class="mess-badge-row">
+            <span class="mess-active-badge badge-open" id="messActiveBadge">🟢 MEAL SERVICE ACTIVE</span>
+            <span class="mess-timer-badge" id="messTimerBadge">Refreshes in 30s ⏳</span>
+          </div>
+          <div class="mess-window-text" id="messWindowText">
+            Serving: <strong>Lunch (12:30 PM – 2:45 PM)</strong> at The Chef Talk
+          </div>
+        </div>
+
+        <!-- Meal QR Pass Card (Active state) -->
+        <div class="mess-qr-card" id="messQrActiveCard">
+          <div class="mess-qr-header">
+            <div class="mess-vendor-chip">
+              <span class="vendor-icon">🍽️</span>
+              <span>YOUR VENDOR THIS MONTH: <strong>The Chef Talk - All Meals</strong></span>
+            </div>
+            <div class="mess-refresh-countdown-pill" id="messRefreshPill">
+              <span>🔄</span> <span id="messCountdownSeconds">30</span>s
+            </div>
+          </div>
+
+          <!-- 30-Second Refresh Progress Bar -->
+          <div class="mess-timer-bar-wrap">
+            <div class="mess-timer-bar-fill" id="messTimerBarFill" style="width: 100%;"></div>
+          </div>
+
+          <!-- QR Code Canvas & Visual Frame -->
+          <div class="mess-qr-frame">
+            <div class="qr-glow-pulse" id="qrGlowPulse"></div>
+            <div class="mess-qr-canvas-wrap" id="messQrCanvasWrap">
+              <canvas id="messQrCanvas" width="220" height="220" style="display: none;"></canvas>
+              <img id="messQrImg" class="mess-qr-img" src="" alt="SST Student Meal QR Code" />
+            </div>
+            <div class="qr-scan-line" id="qrScanLine"></div>
+          </div>
+
+          <!-- Student & Security Metadata -->
+          <div class="mess-student-meta">
+            <div class="student-name-row" id="messStudentNameRow">Manish (26BCS10031)</div>
+            <div class="student-email-row" id="messStudentEmailRow">manish.26bcs10031@sst.scaler.com</div>
+            <div class="qr-token-hash" id="messTokenHash">TOKEN: SST-MESS-26BCS10031-LUNCH-9A8F3C</div>
+            <div class="qr-instruction-text">Show this dynamic QR to the mess vendor to collect your food</div>
+          </div>
+
+          <div class="mess-qr-actions">
+            <button class="mc-btn mc-btn-green" id="manualRefreshQrBtn" type="button">
+              <span>🔄</span> REFRESH QR NOW
+            </button>
+            <button class="mc-btn mc-btn-gold" id="toggleDemoMealBtn" type="button" title="Test QR code preview anytime">
+              <span>⚡</span> TEST DEMO MODE
+            </button>
+          </div>
+        </div>
+
+        <!-- Wrong Meal Time Card (Matches Screenshot 1 when closed) -->
+        <div class="mess-closed-card" id="messClosedCard" style="display: none;">
+          <div class="mess-closed-inner">
+            <div class="closed-info-icon">ℹ️</div>
+            <div class="closed-title">Wrong meal time.</div>
+            <div class="closed-desc">No QR is available right now.</div>
+            <div class="closed-countdown" id="closedCountdownText">Next meal: Breakfast starts at 7:30 AM</div>
+            <button class="mc-btn mc-btn-gold" id="enableDemoPassBtn" type="button" style="margin-top: 14px;">
+              <span>⚡</span> PREVIEW / TEST MEAL QR (DEMO MODE)
+            </button>
+          </div>
+        </div>
+
+        <!-- Campus Mess Schedule Grid -->
+        <div class="mess-schedule-grid">
+          <div class="mess-slot-card" id="slotBreakfast">
+            <div class="slot-icon">🌅</div>
+            <div class="slot-info">
+              <div class="slot-name">BREAKFAST</div>
+              <div class="slot-time">07:30 AM – 10:00 AM</div>
+            </div>
+            <span class="slot-status-pill" id="statusPillBreakfast">Upcoming</span>
+          </div>
+          <div class="mess-slot-card" id="slotLunch">
+            <div class="slot-icon">🍖</div>
+            <div class="slot-info">
+              <div class="slot-name">LUNCH</div>
+              <div class="slot-time">12:30 PM – 02:45 PM</div>
+            </div>
+            <span class="slot-status-pill" id="statusPillLunch">Upcoming</span>
+          </div>
+          <div class="mess-slot-card" id="slotSnacks">
+            <div class="slot-icon">☕</div>
+            <div class="slot-info">
+              <div class="slot-name">SNACKS / HI-TEA</div>
+              <div class="slot-time">05:00 PM – 06:30 PM</div>
+            </div>
+            <span class="slot-status-pill" id="statusPillSnacks">Upcoming</span>
+          </div>
+          <div class="mess-slot-card" id="slotDinner">
+            <div class="slot-icon">🍛</div>
+            <div class="slot-info">
+              <div class="slot-name">DINNER</div>
+              <div class="slot-time">08:00 PM – 10:00 PM</div>
+            </div>
+            <span class="slot-status-pill" id="statusPillDinner">Upcoming</span>
+          </div>
+        </div>
+
+        <!-- Scaler Dashboard External Links -->
+        <div class="mess-links-row">
+          <a href="https://mess.sst-dashboard.com/student/dashboard" target="_blank" rel="noopener noreferrer" class="mess-external-link">
+            <span>🌐</span> Open mess.sst-dashboard.com ↗
+          </a>
+          <a href="https://mess.sst-dashboard.com/student/dashboard/menu" target="_blank" rel="noopener noreferrer" class="mess-external-link">
+            <span>📖</span> Today's Menu ↗
+          </a>
+          <a href="https://mess.sst-dashboard.com/student/dashboard/history" target="_blank" rel="noopener noreferrer" class="mess-external-link">
+            <span>📅</span> Meal History ↗
+          </a>
         </div>
 
       </div>

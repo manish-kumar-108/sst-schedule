@@ -1704,6 +1704,8 @@ window.addEventListener('DOMContentLoaded', () => {
   checkAuthSession();
   checkIncomingAttendanceSync();
   renderAttendanceModal();
+  checkIncomingMessSync();
+  updateLiveMessHud();
   
   // Start main loop immediately
   tickRealtimeClock();
@@ -2334,6 +2336,9 @@ function updateDashboard() {
 
   // Live Attendance HUD & Bunk Impact
   updateLiveAttendanceHud(status);
+
+  // Live Mess Meal Pass HUD
+  updateLiveMessHud();
 }
 
 function renderStaminaIcons(status) {
@@ -2499,6 +2504,7 @@ function tickRealtimeClock() {
   }
 
   updateDashboard();
+  tickMessQrTimer();
 
   // Send update to sticky notification every minute
   const s = new Date().getSeconds();
@@ -3015,6 +3021,311 @@ function updateBunkSimulatorResult() {
 }
 
 // ==========================================
+// 6.6 SCALER MESS & 30-SECOND DYNAMIC MEAL QR ENGINE
+// ==========================================
+const SST_MEAL_WINDOWS = [
+  { id: 'breakfast', name: 'Breakfast', icon: '🌅', startMins: 450, endMins: 600, timeStr: '07:30 AM – 10:00 AM' }, // 7:30 - 10:00 AM
+  { id: 'lunch', name: 'Lunch', icon: '🍖', startMins: 750, endMins: 885, timeStr: '12:30 PM – 02:45 PM' },       // 12:30 - 2:45 PM
+  { id: 'snacks', name: 'Snacks / Hi-Tea', icon: '☕', startMins: 1020, endMins: 1110, timeStr: '05:00 PM – 06:30 PM' }, // 5:00 - 6:30 PM
+  { id: 'dinner', name: 'Dinner', icon: '🍛', startMins: 1200, endMins: 1320, timeStr: '08:00 PM – 10:00 PM' }    // 8:00 - 10:00 PM
+];
+
+let isDemoMealMode = false;
+let currentMealToken = '';
+let lastQrCycleTimestamp = 0;
+
+function getMessMealStatus() {
+  const { totalMinutes } = getActiveTimeAndDay();
+  
+  // Find if currently inside any meal window
+  const activeMeal = SST_MEAL_WINDOWS.find(m => totalMinutes >= m.startMins && totalMinutes < m.endMins);
+
+  if (activeMeal) {
+    const minsLeft = activeMeal.endMins - totalMinutes;
+    return {
+      isOpen: true,
+      meal: activeMeal,
+      statusText: `Serving ${activeMeal.name} (${activeMeal.timeStr})`,
+      countdownText: `Ends in ${minsLeft}m`,
+      minsLeft,
+      isDemo: false
+    };
+  }
+
+  // Not currently in any meal window
+  if (isDemoMealMode) {
+    const demoMeal = SST_MEAL_WINDOWS[1]; // default to Lunch for Demo
+    return {
+      isOpen: true,
+      meal: demoMeal,
+      statusText: `Demo Preview: ${demoMeal.name} (${demoMeal.timeStr})`,
+      countdownText: 'Demo Mode Active',
+      isDemo: true
+    };
+  }
+
+  // Find next upcoming meal
+  let nextMeal = SST_MEAL_WINDOWS.find(m => m.startMins > totalMinutes);
+  let minsUntilNext = 0;
+  if (nextMeal) {
+    minsUntilNext = nextMeal.startMins - totalMinutes;
+  } else {
+    // Next meal is tomorrow morning Breakfast
+    nextMeal = SST_MEAL_WINDOWS[0];
+    minsUntilNext = (24 * 60 - totalMinutes) + nextMeal.startMins;
+  }
+
+  const hLeft = Math.floor(minsUntilNext / 60);
+  const mLeft = minsUntilNext % 60;
+  const timeUntilStr = hLeft > 0 ? `${hLeft}h ${mLeft}m` : `${mLeft}m`;
+
+  return {
+    isOpen: false,
+    meal: null,
+    nextMeal,
+    minsUntilNext,
+    statusText: `Mess Closed • Next: ${nextMeal.name}`,
+    countdownText: `Next meal: ${nextMeal.name} starts at ${nextMeal.timeStr.split('–')[0].trim()} (in ${timeUntilStr})`,
+    isDemo: false
+  };
+}
+
+function updateLiveMessHud() {
+  const hud = document.getElementById('liveMessHud');
+  const titleEl = document.getElementById('messHudTitle');
+  const subEl = document.getElementById('messHudSub');
+  const iconEl = document.getElementById('messHudIcon');
+  const openBtn = document.getElementById('hudOpenMessBtn');
+  const headerMessText = document.getElementById('headerMessText');
+  if (!hud) return;
+
+  const status = getMessMealStatus();
+  if (status.isOpen) {
+    if (titleEl) titleEl.textContent = `SST MESS: ${status.meal.name.toUpperCase()} ACTIVE`;
+    if (subEl) subEl.textContent = `${status.meal.timeStr} • The Chef Talk`;
+    if (iconEl) iconEl.textContent = status.meal.icon || '🍱';
+    if (openBtn) openBtn.innerHTML = '<span>⚡</span> MEAL QR ACTIVE';
+    if (headerMessText) headerMessText.textContent = `${status.meal.name.toUpperCase()} QR`;
+  } else {
+    if (titleEl) titleEl.textContent = 'SST MESS: WRONG MEAL TIME';
+    if (subEl) subEl.textContent = `Next: ${status.nextMeal.name} (${status.nextMeal.timeStr.split('–')[0].trim()}) • Closed`;
+    if (iconEl) iconEl.textContent = 'ℹ️';
+    if (openBtn) openBtn.innerHTML = '<span>🍱</span> MEAL PASS';
+    if (headerMessText) headerMessText.textContent = 'MEAL QR';
+  }
+}
+
+function renderMessModal() {
+  const status = getMessMealStatus();
+  const banner = document.getElementById('messStatusBanner');
+  const activeBadge = document.getElementById('messActiveBadge');
+  const windowText = document.getElementById('messWindowText');
+  const activeCard = document.getElementById('messQrActiveCard');
+  const closedCard = document.getElementById('messClosedCard');
+  const closedCountdown = document.getElementById('closedCountdownText');
+  const toggleDemoBtn = document.getElementById('toggleDemoMealBtn');
+  const studentNameRow = document.getElementById('messStudentNameRow');
+  const studentEmailRow = document.getElementById('messStudentEmailRow');
+
+  // Student info from auth
+  const user = currentUser || { email: 'manish.26bcs10031@sst.scaler.com', user_metadata: { full_name: 'Manish (26BCS10031)' } };
+  const email = (user.email || 'manish.26bcs10031@sst.scaler.com').toLowerCase();
+  const fullName = (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || email.split('@')[0];
+
+  if (studentNameRow) studentNameRow.textContent = fullName;
+  if (studentEmailRow) studentEmailRow.textContent = email;
+
+  if (status.isOpen) {
+    if (banner) banner.style.display = 'flex';
+    if (activeBadge) {
+      activeBadge.className = 'mess-active-badge badge-open';
+      activeBadge.textContent = status.isDemo ? '⚡ DEMO MEAL PASS ACTIVE' : `🟢 ${status.meal.name.toUpperCase()} SERVICE ACTIVE`;
+    }
+    if (windowText) {
+      windowText.innerHTML = `Serving: <strong>${status.meal.name} (${status.meal.timeStr})</strong> at The Chef Talk`;
+    }
+    if (activeCard) activeCard.style.display = 'flex';
+    if (closedCard) closedCard.style.display = 'none';
+
+    if (toggleDemoBtn) {
+      toggleDemoBtn.textContent = isDemoMealMode ? 'EXIT DEMO MODE' : '⚡ TEST DEMO MODE';
+    }
+
+    refreshMealQrCode(false);
+  } else {
+    // Closed (Screenshot 1 replica)
+    if (banner) banner.style.display = 'none';
+    if (activeCard) activeCard.style.display = 'none';
+    if (closedCard) closedCard.style.display = 'block';
+    if (closedCountdown) closedCountdown.textContent = status.countdownText;
+  }
+
+  // Update 4 Slot Cards
+  SST_MEAL_WINDOWS.forEach(m => {
+    const slotEl = document.getElementById(`slot${m.id.charAt(0).toUpperCase() + m.id.slice(1)}`);
+    const pillEl = document.getElementById(`statusPill${m.id.charAt(0).toUpperCase() + m.id.slice(1)}`);
+    if (!slotEl || !pillEl) return;
+
+    const { totalMinutes } = getActiveTimeAndDay();
+    const isThisActive = status.isOpen && status.meal && status.meal.id === m.id;
+    const isPast = totalMinutes >= m.endMins;
+
+    if (isThisActive) {
+      slotEl.className = 'mess-slot-card active-slot';
+      pillEl.textContent = 'Active Now 🟢';
+    } else if (isPast) {
+      slotEl.className = 'mess-slot-card';
+      pillEl.textContent = 'Ended';
+    } else {
+      slotEl.className = 'mess-slot-card';
+      pillEl.textContent = 'Upcoming';
+    }
+  });
+}
+
+function refreshMealQrCode(force = true) {
+  const status = getMessMealStatus();
+  if (!status.isOpen) return;
+
+  const now = Date.now();
+  const cycleIndex = Math.floor(now / 30000); // 30-second epoch chunk
+  if (!force && lastQrCycleTimestamp === cycleIndex) {
+    return; // Already up-to-date for this 30s block
+  }
+  lastQrCycleTimestamp = cycleIndex;
+
+  const user = currentUser || { email: 'manish.26bcs10031@sst.scaler.com' };
+  const cleanEmail = (user.email || 'manish.26bcs10031@sst.scaler.com').toLowerCase();
+  const mealId = (status.meal && status.meal.id) || 'lunch';
+
+  // Compute rotating security token hash
+  const hashSeed = `${cleanEmail}:${mealId}:${cycleIndex}:SST_MESS_SALT_99`;
+  let hashVal = 0;
+  for (let i = 0; i < hashSeed.length; i++) {
+    hashVal = ((hashVal << 5) - hashVal) + hashSeed.charCodeAt(i);
+    hashVal |= 0;
+  }
+  const hexHash = Math.abs(hashVal).toString(16).toUpperCase().padStart(8, '0');
+  const tokenString = `SST-MESS-${cleanEmail.split('@')[0].toUpperCase().slice(0, 12)}-${mealId.toUpperCase()}-${hexHash}`;
+
+  currentMealToken = tokenString;
+
+  const tokenHashEl = document.getElementById('messTokenHash');
+  if (tokenHashEl) {
+    tokenHashEl.textContent = `TOKEN: ${tokenString}`;
+  }
+
+  // Official Scaler Mess Verification QR Payload format
+  const qrPayload = `https://mess.sst-dashboard.com/verify?student=${encodeURIComponent(cleanEmail)}&meal=${mealId}&token=${tokenString}&ts=${now}`;
+
+  const qrImg = document.getElementById('messQrImg');
+  const qrFrame = document.querySelector('.mess-qr-frame');
+
+  if (qrImg) {
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(qrPayload)}`;
+    qrImg.style.display = 'block';
+  }
+
+  // Trigger pulse shimmer
+  if (qrFrame) {
+    qrFrame.classList.remove('pulse-shimmer');
+    void qrFrame.offsetWidth;
+    qrFrame.classList.add('pulse-shimmer');
+  }
+
+  // Render offline Canvas QR matrix fallback as backup
+  renderOfflineQrCanvas(qrPayload);
+}
+
+function renderOfflineQrCanvas(payload) {
+  const canvas = document.getElementById('messQrCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.fillStyle = '#000000';
+  const size = 25;
+  const cellSize = Math.floor((w - 20) / size);
+  const offset = Math.floor((w - cellSize * size) / 2);
+
+  function drawFinder(r, c) {
+    for (let i = 0; i < 7; i++) {
+      for (let j = 0; j < 7; j++) {
+        if (i === 0 || i === 6 || j === 0 || j === 6 || (i >= 2 && i <= 4 && j >= 2 && j <= 4)) {
+          ctx.fillRect(offset + (c + j) * cellSize, offset + (r + i) * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+  }
+
+  drawFinder(0, 0);
+  drawFinder(0, size - 7);
+  drawFinder(size - 7, 0);
+
+  // Seeded data dots
+  let seed = 0;
+  for (let k = 0; k < payload.length; k++) seed = (seed * 31 + payload.charCodeAt(k)) & 0xffffff;
+
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const inFinder = (r < 7 && c < 7) || (r < 7 && c >= size - 7) || (r >= size - 7 && c < 7);
+      if (!inFinder) {
+        seed = (seed * 16807) % 2147483647;
+        if ((seed % 100) < 48) {
+          ctx.fillRect(offset + c * cellSize, offset + r * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+  }
+}
+
+function tickMessQrTimer() {
+  const secondsLeft = 30 - (Math.floor(Date.now() / 1000) % 30);
+  
+  const countdownSecEl = document.getElementById('messCountdownSeconds');
+  const timerBadgeEl = document.getElementById('messTimerBadge');
+  const timerBarFill = document.getElementById('messTimerBarFill');
+
+  if (countdownSecEl) countdownSecEl.textContent = secondsLeft;
+  if (timerBadgeEl) timerBadgeEl.textContent = `Refreshes in ${secondsLeft}s ⏳`;
+  if (timerBarFill) {
+    const pct = Math.max(2, (secondsLeft / 30) * 100);
+    timerBarFill.style.width = `${pct}%`;
+  }
+
+  // When cycle rolls over, refresh the QR code
+  if (secondsLeft === 30 || secondsLeft === 0) {
+    refreshMealQrCode(true);
+  }
+}
+
+function checkIncomingMessSync() {
+  if (window.location.hash.includes('sync_mess=')) {
+    try {
+      const match = window.location.hash.match(/sync_mess=([^&]+)/);
+      if (match && match[1]) {
+        const payload = JSON.parse(decodeURIComponent(match[1]));
+        if (payload) {
+          showToast('🍱 SST Mess Pass Synced from Dashboard!');
+          const messModal = document.getElementById('messModal');
+          if (messModal) {
+            openModal(messModal);
+            renderMessModal();
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[Mess Sync]', e);
+    }
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  }
+}
+
+// ==========================================
 // 7. EVENT LISTENERS & MODAL CONTROLS
 // ==========================================
 function openModal(modalEl) {
@@ -3156,6 +3467,70 @@ function setupUIEventListeners() {
         closeModal(attendanceModal);
       }
     });
+  }
+
+  // SST Mess Modal Controls
+  const messModal = document.getElementById('messModal');
+  const openMessBtn = document.getElementById('openMessBtn');
+  const hudOpenMessBtn = document.getElementById('hudOpenMessBtn');
+  const closeMessModalBtn = document.getElementById('closeMessModalBtn');
+  const manualRefreshQrBtn = document.getElementById('manualRefreshQrBtn');
+  const toggleDemoMealBtn = document.getElementById('toggleDemoMealBtn');
+  const enableDemoPassBtn = document.getElementById('enableDemoPassBtn');
+
+  if (openMessBtn) {
+    openMessBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      renderMessModal();
+      openModal(messModal);
+    });
+  }
+
+  if (hudOpenMessBtn) {
+    hudOpenMessBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      renderMessModal();
+      openModal(messModal);
+    });
+  }
+
+  if (closeMessModalBtn) {
+    closeMessModalBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      closeModal(messModal);
+    });
+  }
+
+  if (messModal) {
+    messModal.addEventListener('click', (e) => {
+      if (e.target === messModal) {
+        closeModal(messModal);
+      }
+    });
+  }
+
+  if (manualRefreshQrBtn) {
+    manualRefreshQrBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      refreshMealQrCode(true);
+      showToast('🔄 Meal QR Code Refreshed!');
+    });
+  }
+
+  function handleDemoToggle() {
+    isDemoMealMode = !isDemoMealMode;
+    playThemeSound('portal');
+    renderMessModal();
+    updateLiveMessHud();
+    showToast(isDemoMealMode ? '⚡ Demo Meal QR Pass Active!' : 'Returned to Real-Time Mess Hours');
+  }
+
+  if (toggleDemoMealBtn) {
+    toggleDemoMealBtn.addEventListener('click', handleDemoToggle);
+  }
+
+  if (enableDemoPassBtn) {
+    enableDemoPassBtn.addEventListener('click', handleDemoToggle);
   }
 
   // Copy Bookmarklet Button

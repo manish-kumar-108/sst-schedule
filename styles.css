@@ -3626,4 +3626,557 @@ body[data-theme="pink"] .sim-result-card {
   color: #831843;
 }
 
+/* ============================================================
+   SST MESS & MEAL QR PASS STYLES
+   ============================================================ */
+
+/* Button Variant: Orange */
+.mc-btn-orange {
+  background: #c25e1a;
+  color: #fff2e6;
+  box-shadow: inset -3px -3px 0px 0px #70330a, inset 3px 3px 0px 0px #f0883b;
+}
+.mc-btn-orange:hover {
+  background: #d86d22;
+  color: #ffffff;
+}
+body[data-theme="minimal"] .mc-btn-orange {
+  background: rgba(249, 115, 22, 0.2) !important;
+  border: 1px solid rgba(249, 115, 22, 0.45) !important;
+  color: #fdba74 !important;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15) !important;
+}
+body[data-theme="pink"] .mc-btn-orange {
+  background: linear-gradient(135deg, #ffedd5, #fed7aa) !important;
+  border: 2px solid #fb923c !important;
+  color: #9a3412 !important;
+  box-shadow: 0 4px 14px rgba(251, 146, 60, 0.25) !important;
+}
+
+/* Live Mess HUD in Boss Card */
+.mc-mess-hud {
+  margin-top: 12px;
+  background: rgba(194, 94, 26, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+body[data-theme="minecraft"] .mc-mess-hud {
+  background: #2b221a;
+  border: 2px solid #000;
+  box-shadow: inset -2px -2px 0 #18120e, inset 2px 2px 0 #523824;
+  border-radius: 0;
+}
+body[data-theme="minimal"] .mc-mess-hud {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: 14px;
+}
+body[data-theme="pink"] .mc-mess-hud {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  border-radius: 18px;
+}
+
+.mess-hud-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mess-hud-icon {
+  font-size: 20px;
+}
+.mess-hud-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.mess-hud-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fb923c;
+  letter-spacing: 0.03em;
+}
+body[data-theme="pink"] .mess-hud-title {
+  color: #c2410c;
+}
+.mess-hud-sub {
+  font-size: 9px;
+  color: #cbd5e1;
+  margin-top: 2px;
+}
+body[data-theme="pink"] .mess-hud-sub {
+  color: #7c2d12;
+}
+
+.mess-hud-open-btn {
+  background: #f97316 !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+.mess-hud-open-btn:hover {
+  background: #ea580c !important;
+}
+
+/* Mess Modal Box */
+.mess-modal-box {
+  max-width: 620px !important;
+  width: 95% !important;
+}
+
+/* Status Banner */
+.mess-status-banner {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+body[data-theme="minecraft"] .mess-status-banner {
+  border: 2px solid #000;
+  border-radius: 0;
+  background: #1c1c24;
+}
+body[data-theme="pink"] .mess-status-banner {
+  background: #fff;
+  border: 2px solid #fed7aa;
+  border-radius: 16px;
+}
+
+.mess-badge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mess-active-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+}
+.mess-active-badge.badge-open {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+.mess-active-badge.badge-closed {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+body[data-theme="pink"] .mess-active-badge.badge-open {
+  background: #dcfce7;
+  color: #15803d;
+}
+body[data-theme="pink"] .mess-active-badge.badge-closed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.mess-timer-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+body[data-theme="pink"] .mess-timer-badge {
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.mess-window-text {
+  font-size: 12px;
+  color: #f1f5f9;
+}
+body[data-theme="pink"] .mess-window-text {
+  color: #4a044e;
+}
+
+/* Meal QR Card */
+.mess-qr-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+body[data-theme="minecraft"] .mess-qr-card {
+  border: 3px solid #000;
+  border-radius: 0;
+  background: #24242d;
+  box-shadow: inset -3px -3px 0 #14141a, inset 3px 3px 0 #3c3c4a;
+}
+body[data-theme="minimal"] .mess-qr-card {
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+body[data-theme="pink"] .mess-qr-card {
+  background: #ffffff;
+  border: 2px solid #fbcfe8;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(244, 114, 182, 0.15);
+}
+
+.mess-qr-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mess-vendor-chip {
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mess-vendor-chip strong {
+  color: #f1f5f9;
+}
+body[data-theme="pink"] .mess-vendor-chip {
+  color: #9d174d;
+}
+body[data-theme="pink"] .mess-vendor-chip strong {
+  color: #831843;
+}
+
+.mess-refresh-countdown-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+body[data-theme="pink"] .mess-refresh-countdown-pill {
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+  color: #db2777;
+}
+
+/* 30-Second Refresh Progress Bar */
+.mess-timer-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+body[data-theme="pink"] .mess-timer-bar-wrap {
+  background: #fce7f3;
+}
+.mess-timer-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #22c55e);
+  transition: width 1s linear;
+}
+body[data-theme="pink"] .mess-timer-bar-fill {
+  background: linear-gradient(90deg, #f472b6, #fb7185);
+}
+
+/* QR Code Frame with Scanner Animation */
+.mess-qr-frame {
+  position: relative;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 12px;
+  border: 4px solid #1e293b;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+body[data-theme="minecraft"] .mess-qr-frame {
+  border: 4px solid #000;
+  border-radius: 0;
+  box-shadow: inset -2px -2px #cbd5e1, inset 2px 2px #ffffff, 0 6px 0 rgba(0,0,0,0.5);
+}
+body[data-theme="pink"] .mess-qr-frame {
+  border: 3px solid #fbcfe8;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(244, 114, 182, 0.3);
+}
+
+.mess-qr-img {
+  width: 220px;
+  height: 220px;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Laser Scan-line */
+.qr-scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #22c55e, #38bdf8, transparent);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+  animation: qr-laser 2.4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+body[data-theme="pink"] .qr-scan-line {
+  background: linear-gradient(90deg, transparent, #ec4899, #f43f5e, transparent);
+  box-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
+}
+@keyframes qr-laser {
+  0% { top: 6px; }
+  100% { top: calc(100% - 9px); }
+}
+
+/* Student & Security Metadata */
+.mess-student-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.student-name-row {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+}
+body[data-theme="pink"] .student-name-row {
+  color: #831843;
+}
+.student-email-row {
+  font-size: 11px;
+  color: #94a3b8;
+}
+body[data-theme="pink"] .student-email-row {
+  color: #be185d;
+}
+.qr-token-hash {
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #38bdf8;
+  margin-top: 4px;
+}
+body[data-theme="pink"] .qr-token-hash {
+  background: #fdf2f8;
+  color: #db2777;
+}
+.qr-instruction-text {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+}
+body[data-theme="pink"] .qr-instruction-text {
+  color: #9d174d;
+}
+
+.mess-qr-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Wrong Meal Time Card (Matches Screenshot 1) */
+.mess-closed-card {
+  padding: 30px 20px;
+  text-align: center;
+}
+.mess-closed-inner {
+  max-width: 440px;
+  margin: 0 auto;
+  background: #fdf8e6;
+  border: 1.5px solid #f6e05e;
+  border-radius: 16px;
+  padding: 28px 24px;
+  color: #744210;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+body[data-theme="minecraft"] .mess-closed-inner {
+  background: #332612;
+  border: 3px solid #000;
+  border-radius: 0;
+  color: #fef08a;
+  box-shadow: inset -2px -2px #181206, inset 2px 2px #6b4d1b;
+}
+body[data-theme="minimal"] .mess-closed-inner {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+body[data-theme="pink"] .mess-closed-inner {
+  background: #fff7ed;
+  border: 2px solid #fed7aa;
+  color: #9a3412;
+}
+
+.closed-info-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border-radius: 50%;
+  background: rgba(234, 179, 8, 0.2);
+}
+.closed-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.closed-desc {
+  font-size: 12px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+.closed-countdown {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+/* Schedule Grid */
+.mess-schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+@media (max-width: 540px) {
+  .mess-schedule-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.mess-slot-card {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body[data-theme="minecraft"] .mess-slot-card {
+  border: 2px solid #000;
+  border-radius: 0;
+  background: #24242d;
+}
+body[data-theme="pink"] .mess-slot-card {
+  background: #fff;
+  border: 1.5px solid #fbcfe8;
+  border-radius: 14px;
+}
+.mess-slot-card.active-slot {
+  border-color: #22c55e !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+}
+body[data-theme="pink"] .mess-slot-card.active-slot {
+  background: #dcfce7 !important;
+  border-color: #4ade80 !important;
+}
+
+.slot-icon {
+  font-size: 20px;
+}
+.slot-info {
+  flex: 1;
+}
+.slot-name {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffffff;
+}
+body[data-theme="pink"] .slot-name {
+  color: #831843;
+}
+.slot-time {
+  font-size: 9px;
+  color: #94a3b8;
+}
+body[data-theme="pink"] .slot-time {
+  color: #9d174d;
+}
+.slot-status-pill {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+.mess-slot-card.active-slot .slot-status-pill {
+  background: #22c55e;
+  color: #000;
+}
+
+/* External Links Row */
+.mess-links-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+body[data-theme="pink"] .mess-links-row {
+  border-top-color: #fbcfe8;
+}
+.mess-external-link {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+}
+.mess-external-link:hover {
+  background: rgba(56, 189, 248, 0.15);
+  transform: translateY(-1px);
+}
+body[data-theme="pink"] .mess-external-link {
+  background: #fdf2f8;
+  color: #db2777;
+}
+body[data-theme="pink"] .mess-external-link:hover {
+  background: #fce7f3;
+}
+
+
 
