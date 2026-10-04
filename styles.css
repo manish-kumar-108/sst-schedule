@@ -2696,12 +2696,49 @@ body[data-theme="pink"] .login-input:focus {
   box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.25);
 }
 
-.login-submit-btn {
-  width: 100%;
+.login-form-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.login-submit-btn,
+.login-instant-btn {
+  flex: 1;
+  min-width: 140px;
   justify-content: center;
-  padding: 12px 16px !important;
-  font-size: 12px !important;
-  letter-spacing: 0.05em;
+  padding: 12px 14px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.04em;
+}
+
+.login-instant-btn {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+}
+.login-instant-btn:hover {
+  background: #d97706 !important;
+  color: #ffffff !important;
+}
+body[data-theme="minecraft"] .login-instant-btn {
+  border-radius: 0;
+  border: 3px solid #000;
+  box-shadow: inset -2px -2px 0 #b45309, inset 2px 2px 0 #fde68a;
+  font-family: inherit;
+}
+body[data-theme="minimal"] .login-instant-btn {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35)) !important;
+  border: 1px solid rgba(245, 158, 11, 0.5) !important;
+  color: #fde68a !important;
+  border-radius: 10px;
+}
+body[data-theme="pink"] .login-instant-btn {
+  background: #f472b6 !important;
+  border: 2px solid #fbcfe8 !important;
+  color: #ffffff !important;
+  border-radius: 9999px;
 }
 
 /* Features row */

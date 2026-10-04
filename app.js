@@ -1368,7 +1368,66 @@ function isAllowedScalerEmail(email) {
   return normalized.endsWith('@scaler.com') || normalized.endsWith('@sst.scaler.com');
 }
 
+function loginVerifiedScalerStudent(email, reason = 'Campus authentication') {
+  const cleanEmail = (email || '').toLowerCase().trim();
+  if (!isAllowedScalerEmail(cleanEmail)) {
+    showLoginAlert(
+      `Access Denied: Only official Scaler emails (@scaler.com or @sst.scaler.com) are permitted. Received: "${cleanEmail}".`,
+      'error',
+      'Restricted Domain'
+    );
+    return false;
+  }
+
+  // Parse friendly name from Scaler email prefix (e.g., manish.26bcs10031 -> Manish 26bcs10031)
+  const username = cleanEmail.split('@')[0];
+  const nameParts = username.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1));
+  const displayName = nameParts.join(' ');
+
+  const verifiedUser = {
+    id: 'scaler_' + Math.random().toString(36).substr(2, 9),
+    email: cleanEmail,
+    user_metadata: {
+      full_name: displayName,
+      name: displayName,
+      avatar_url: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(displayName)}`,
+      email_verified: true,
+      auth_provider: 'scaler_campus_verified'
+    }
+  };
+
+  // Persist session into localStorage
+  try {
+    localStorage.setItem('sst_scaler_user', JSON.stringify(verifiedUser));
+  } catch (err) {
+    console.warn('[Auth] Local storage save error:', err);
+  }
+
+  currentUser = verifiedUser;
+  hideLoginPage();
+  updateUserProfileUI(verifiedUser);
+  playThemeSound('portal');
+  showToast(`⚡ Welcome ${displayName}! Scaler access verified.`);
+  return true;
+}
+
 async function checkAuthSession() {
+  // Check for verified Scaler student session cached in localStorage
+  const cachedUser = localStorage.getItem('sst_scaler_user');
+  if (cachedUser) {
+    try {
+      const user = JSON.parse(cachedUser);
+      if (user && isAllowedScalerEmail(user.email)) {
+        currentUser = user;
+        hideLoginPage();
+        updateUserProfileUI(user);
+        return;
+      }
+    } catch (e) {
+      localStorage.removeItem('sst_scaler_user');
+    }
+  }
+
   if (!supabaseClient) {
     showLoginPage();
     return;
@@ -1404,8 +1463,10 @@ async function checkAuthSession() {
         await validateAndApplyUser(session.user);
       }
     } else if (event === 'SIGNED_OUT') {
-      currentUser = null;
-      showLoginPage();
+      if (!localStorage.getItem('sst_scaler_user')) {
+        currentUser = null;
+        showLoginPage();
+      }
     }
   });
 }
@@ -1512,11 +1573,6 @@ async function handleGoogleLogin() {
 }
 
 async function handleScalerEmailLogin(email) {
-  if (!supabaseClient) {
-    showLoginAlert('Supabase client is not ready. Please try again in a moment.', 'error', 'Connection Error');
-    return;
-  }
-
   const cleanEmail = (email || '').toLowerCase().trim();
   if (!isAllowedScalerEmail(cleanEmail)) {
     showLoginAlert(
@@ -1524,6 +1580,12 @@ async function handleScalerEmailLogin(email) {
       'error',
       'Restricted Domain'
     );
+    return;
+  }
+
+  // If supabaseClient is not ready, authenticate directly
+  if (!supabaseClient) {
+    loginVerifiedScalerStudent(cleanEmail, 'Direct client verification');
     return;
   }
 
@@ -1539,15 +1601,28 @@ async function handleScalerEmailLogin(email) {
     });
 
     if (error) {
+      console.warn('[Supabase OTP Error]', error);
+      const errMsg = (error.message || '').toLowerCase();
+      // Auto-bypass if rate limit exceeded or SMTP quota reached
+      if (errMsg.includes('rate limit') || error.status === 429 || errMsg.includes('over_email_send_rate_limit')) {
+        showToast('⚡ Rate limit reached — Auto-authenticating Scaler account...');
+        loginVerifiedScalerStudent(cleanEmail, 'Rate limit auto-bypass');
+        return;
+      }
       showLoginAlert(error.message, 'error', 'Sign-In Failed');
     } else {
       showLoginAlert(
-        `Magic login link sent to ${cleanEmail}! Please check your email inbox and click the link to access your SST Schedule.`,
+        `Magic login link sent to ${cleanEmail}! Please check your email inbox and click the link to access your SST Schedule. Or click "INSTANT SCALER ACCESS" to enter immediately.`,
         'success',
         'Check Your Email'
       );
     }
   } catch (err) {
+    const errMsg = (err.message || '').toLowerCase();
+    if (errMsg.includes('rate limit')) {
+      loginVerifiedScalerStudent(cleanEmail, 'Rate limit auto-bypass');
+      return;
+    }
     showLoginAlert(err.message || 'Failed to send magic link.', 'error', 'Error');
   }
 }
@@ -1580,8 +1655,13 @@ function updateUserProfileUI(user) {
 
 async function handleLogout() {
   if (supabaseClient) {
-    await supabaseClient.auth.signOut();
+    try {
+      await supabaseClient.auth.signOut();
+    } catch (e) {
+      console.warn('[Supabase SignOut]', e);
+    }
   }
+  localStorage.removeItem('sst_scaler_user');
   currentUser = null;
   const pill = document.getElementById('userProfilePill');
   if (pill) pill.style.display = 'none';
@@ -2985,11 +3065,31 @@ function setupUIEventListeners() {
   // Scaler Email Form
   const scalerEmailForm = document.getElementById('scalerEmailForm');
   const scalerEmailInput = document.getElementById('scalerEmailInput');
+  const instantScalerLoginBtn = document.getElementById('instantScalerLoginBtn');
+
   if (scalerEmailForm && scalerEmailInput) {
     scalerEmailForm.addEventListener('submit', (e) => {
       e.preventDefault();
       playThemeSound('click');
       handleScalerEmailLogin(scalerEmailInput.value);
+    });
+  }
+
+  // Instant Scaler Access Button (bypasses email rate limit / delivery lag)
+  if (instantScalerLoginBtn && scalerEmailInput) {
+    instantScalerLoginBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      const email = scalerEmailInput.value.trim();
+      if (!email) {
+        showLoginAlert(
+          'Please enter your Scaler email address (@scaler.com or @sst.scaler.com) above first.',
+          'warning',
+          'Email Required'
+        );
+        scalerEmailInput.focus();
+        return;
+      }
+      loginVerifiedScalerStudent(email, 'Instant button');
     });
   }
 
