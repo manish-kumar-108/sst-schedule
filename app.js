@@ -3161,27 +3161,30 @@ function getMessMealStatus() {
 }
 
 function updateLiveMessHud() {
+  const status = getMessMealStatus();
+  const headerMessText = document.getElementById('headerMessText');
+  if (headerMessText) {
+    headerMessText.textContent = status.isOpen ? `${status.meal.name.toUpperCase()} QR` : 'MEAL QR';
+  }
+
   const hud = document.getElementById('liveMessHud');
+  if (!hud) return;
+
   const titleEl = document.getElementById('messHudTitle');
   const subEl = document.getElementById('messHudSub');
   const iconEl = document.getElementById('messHudIcon');
   const openBtn = document.getElementById('hudOpenMessBtn');
-  const headerMessText = document.getElementById('headerMessText');
-  if (!hud) return;
 
-  const status = getMessMealStatus();
   if (status.isOpen) {
     if (titleEl) titleEl.textContent = `SST MESS: ${status.meal.name.toUpperCase()} ACTIVE`;
     if (subEl) subEl.textContent = `${status.meal.timeStr} • The Chef Talk`;
     if (iconEl) iconEl.textContent = status.meal.icon || '🍱';
     if (openBtn) openBtn.innerHTML = '<span>⚡</span> MEAL QR ACTIVE';
-    if (headerMessText) headerMessText.textContent = `${status.meal.name.toUpperCase()} QR`;
   } else {
     if (titleEl) titleEl.textContent = 'SST MESS: WRONG MEAL TIME';
     if (subEl) subEl.textContent = `Next: ${status.nextMeal.name} (${status.nextMeal.timeStr.split('–')[0].trim()}) • Closed`;
     if (iconEl) iconEl.textContent = 'ℹ️';
     if (openBtn) openBtn.innerHTML = '<span>🍱</span> MEAL PASS';
-    if (headerMessText) headerMessText.textContent = 'MEAL QR';
   }
 }
 

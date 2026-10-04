@@ -4383,5 +4383,203 @@ body[data-theme="minimal"] .mc-modal-sub {
   color: #94a3b8 !important;
 }
 
+/* ============================================================
+   THEME MODAL: CREATIVE MODE TIME SIMULATOR PANEL (LAST OPTION)
+   ============================================================ */
+.theme-simulator-panel {
+  margin-top: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.sim-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sim-main-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.sim-sub-title {
+  font-size: 8px;
+  opacity: 0.8;
+  font-weight: 400;
+  text-shadow: none;
+}
+
+.sim-btn-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sim-controls-body {
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  animation: entrance-slide 0.25s ease;
+}
+
+.sim-intro-desc {
+  font-size: 9px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+.sim-control-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sim-control-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.sim-presets-label {
+  font-size: 8px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.sim-preset-btn {
+  font-size: 8px !important;
+  padding: 6px 10px !important;
+}
+
+/* Minecraft Theme Overrides */
+body[data-theme="minecraft"] .theme-simulator-panel {
+  background: #1c1c24;
+  border: 3px dashed #ffd700;
+  box-shadow: inset 3px 3px #282834, inset -3px -3px #0c0c10;
+}
+body[data-theme="minecraft"] .sim-main-title {
+  color: #ffd700;
+  text-shadow: var(--mc-text-shadow);
+}
+body[data-theme="minecraft"] .sim-sub-title {
+  color: #a4a4b2;
+}
+body[data-theme="minecraft"] .sim-control-label,
+body[data-theme="minecraft"] .sim-presets-label {
+  color: #ffd700;
+}
+
+/* Minimal Clean UI Theme Overrides */
+body[data-theme="minimal"] .theme-simulator-panel {
+  background: rgba(15, 23, 42, 0.65) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+body[data-theme="minimal"] .sim-controls-body {
+  border-top: 1px dashed rgba(255, 255, 255, 0.1) !important;
+}
+body[data-theme="minimal"] .sim-main-title {
+  font-size: 13px !important;
+  color: #38bdf8 !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+body[data-theme="minimal"] .sim-sub-title {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+}
+body[data-theme="minimal"] .sim-intro-desc {
+  font-size: 11px !important;
+  color: #cbd5e1 !important;
+}
+body[data-theme="minimal"] .sim-control-label,
+body[data-theme="minimal"] .sim-presets-label {
+  color: #7dd3fc !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+body[data-theme="minimal"] .sim-select,
+body[data-theme="minimal"] .sim-input {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 11px !important;
+  border-radius: 8px !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+}
+body[data-theme="minimal"] .sim-preset-btn {
+  font-size: 10px !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+}
+
+/* Cute Pink UI Theme Overrides */
+body[data-theme="pink"] .theme-simulator-panel {
+  background: #fff5f8 !important;
+  border: 2px dashed #f472b6 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 6px 18px rgba(244, 114, 182, 0.15) !important;
+  font-family: 'Fredoka', cursive, sans-serif !important;
+}
+body[data-theme="pink"] .sim-controls-body {
+  border-top: 1.5px dashed #fbcfe8 !important;
+}
+body[data-theme="pink"] .sim-main-title {
+  font-size: 14px !important;
+  color: #db2777 !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+body[data-theme="pink"] .sim-sub-title {
+  font-size: 11px !important;
+  color: #9d174d !important;
+}
+body[data-theme="pink"] .sim-intro-desc {
+  font-size: 11px !important;
+  color: #831843 !important;
+}
+body[data-theme="pink"] .sim-control-label,
+body[data-theme="pink"] .sim-presets-label {
+  color: #db2777 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+body[data-theme="pink"] .sim-select,
+body[data-theme="pink"] .sim-input {
+  font-family: 'Fredoka', cursive, sans-serif !important;
+  font-size: 12px !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #fbcfe8 !important;
+  color: #831843 !important;
+  box-shadow: none !important;
+}
+body[data-theme="pink"] .sim-preset-btn {
+  font-size: 10px !important;
+  padding: 6px 12px !important;
+  border-radius: 12px !important;
+  background: #fdf2f8 !important;
+  border: 1px solid #fbcfe8 !important;
+  color: #be185d !important;
+}
+body[data-theme="pink"] .sim-preset-btn:hover {
+  background: #fce7f3 !important;
+}
+
+
 
 

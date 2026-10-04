@@ -343,20 +343,6 @@
             <span class="safety-text" id="hudSafetyText">CRITICAL: Missing this class drops your attendance below 75%!</span>
           </div>
         </div>
-
-        <!-- LIVE MESS MEAL STATUS HUD -->
-        <div class="mc-mess-hud" id="liveMessHud">
-          <div class="mess-hud-left">
-            <span class="mess-hud-icon" id="messHudIcon">🍱</span>
-            <div class="mess-hud-info">
-              <div class="mess-hud-title" id="messHudTitle">SST MESS: LUNCH ACTIVE</div>
-              <div class="mess-hud-sub" id="messHudSub">12:30 PM – 2:45 PM • The Chef Talk</div>
-            </div>
-          </div>
-          <button class="att-hud-link-btn mess-hud-open-btn" id="hudOpenMessBtn" type="button" title="Open Scaler Mess Meal Pass">
-            <span>⚡</span> MEAL QR PASS
-          </button>
-        </div>
       </div>
 
       <!-- NEXT CLASS PREVIEW -->
@@ -396,55 +382,6 @@
       </div>
       <div class="mc-slot-list" id="todayScheduleList">
         <!-- Rendered dynamically by JS -->
-      </div>
-    </section>
-
-    <!-- CREATIVE TIME MACHINE / SIMULATOR (FOR EASY TESTING) -->
-    <section class="mc-simulator-panel">
-      <div class="mc-sim-header">
-        <div class="mc-sim-title">
-          <span>🧪</span> CREATIVE MODE: TIME SIMULATOR
-        </div>
-        <div style="display: flex; gap: 6px;">
-          <button id="simToggleBtn" class="mc-btn mc-btn-gold" style="font-size: 8px; padding: 6px 10px;">
-            ENTER SIMULATOR
-          </button>
-          <button id="simResetBtn" class="mc-btn" style="font-size: 8px; padding: 6px 10px; display: none;">
-            RESET TO REAL-TIME
-          </button>
-        </div>
-      </div>
-
-      <div id="simControlsBody" style="display: none; flex-direction: column; gap: 10px;">
-        <div style="font-size: 8px; color: #b8b8c2;">
-          Simulate any day and time to test class tracking, breaks, lunch, and sticky notifications!
-        </div>
-        <div class="mc-sim-controls">
-          <div>
-            <label for="simDaySelect" style="font-size: 7px; color: #ffd700; display: block; margin-bottom: 4px;">DAY OF WEEK:</label>
-            <select id="simDaySelect" class="mc-select">
-              <option value="Monday">Monday</option>
-              <option value="Tuesday">Tuesday</option>
-              <option value="Wednesday">Wednesday</option>
-              <option value="Thursday">Thursday</option>
-              <option value="Friday">Friday</option>
-            </select>
-          </div>
-          <div>
-            <label for="simTimeInput" style="font-size: 7px; color: #ffd700; display: block; margin-bottom: 4px;">SIMULATED TIME:</label>
-            <input type="time" id="simTimeInput" class="mc-select" value="09:45" style="padding: 6px 10px;">
-          </div>
-        </div>
-
-        <div style="font-size: 7px; color: #ffd700;">QUICK JUMP PRESETS:</div>
-        <div class="mc-sim-presets">
-          <button class="mc-btn sim-preset-btn" data-time="09:45" style="font-size: 7px; padding: 6px 8px;">9:45 AM (Slot 1)</button>
-          <button class="mc-btn sim-preset-btn" data-time="11:20" style="font-size: 7px; padding: 6px 8px;">11:20 AM (Break)</button>
-          <button class="mc-btn sim-preset-btn" data-time="12:00" style="font-size: 7px; padding: 6px 8px;">12:00 PM (Slot 2)</button>
-          <button class="mc-btn sim-preset-btn" data-time="13:45" style="font-size: 7px; padding: 6px 8px;">1:45 PM (Lunch)</button>
-          <button class="mc-btn sim-preset-btn" data-time="16:15" style="font-size: 7px; padding: 6px 8px;">4:15 PM (Lab)</button>
-          <button class="mc-btn sim-preset-btn" data-time="18:00" style="font-size: 7px; padding: 6px 8px;">6:00 PM (Clubs)</button>
-        </div>
       </div>
     </section>
 
@@ -557,6 +494,59 @@
               <span class="swatch swatch-pink-4"></span>
             </div>
             <button class="mc-btn theme-apply-btn">APPLY CUTE PINK</button>
+          </div>
+        </div>
+
+        <!-- CREATIVE TIME MACHINE / SIMULATOR (PRESENT AT THE LAST OPTION BELOW ALL UI OPTIONS) -->
+        <div class="theme-simulator-panel mc-simulator-panel" id="creativeSimulatorPanel">
+          <div class="mc-sim-header">
+            <div class="mc-sim-title">
+              <span class="sim-icon">🧪</span>
+              <div class="sim-title-group">
+                <div class="sim-main-title">CREATIVE MODE: TIME SIMULATOR</div>
+                <div class="sim-sub-title">Test any schedule slot, break, mess time &amp; sticky alert</div>
+              </div>
+            </div>
+            <div class="sim-btn-group">
+              <button id="simToggleBtn" class="mc-btn mc-btn-gold sim-toggle-btn" type="button">
+                ENTER SIMULATOR
+              </button>
+              <button id="simResetBtn" class="mc-btn mc-btn-red sim-reset-btn" type="button" style="display: none;">
+                RESET TO REAL-TIME
+              </button>
+            </div>
+          </div>
+
+          <div id="simControlsBody" style="display: none;" class="sim-controls-body">
+            <div class="sim-intro-desc">
+              Simulate any day and time to test class tracking, breaks, lunch, and sticky notifications!
+            </div>
+            <div class="mc-sim-controls">
+              <div class="sim-control-item">
+                <label for="simDaySelect" class="sim-control-label">DAY OF WEEK:</label>
+                <select id="simDaySelect" class="mc-select sim-select">
+                  <option value="Monday">Monday</option>
+                  <option value="Tuesday">Tuesday</option>
+                  <option value="Wednesday">Wednesday</option>
+                  <option value="Thursday">Thursday</option>
+                  <option value="Friday">Friday</option>
+                </select>
+              </div>
+              <div class="sim-control-item">
+                <label for="simTimeInput" class="sim-control-label">SIMULATED TIME:</label>
+                <input type="time" id="simTimeInput" class="mc-select sim-input" value="09:45">
+              </div>
+            </div>
+
+            <div class="sim-presets-label">QUICK JUMP PRESETS:</div>
+            <div class="mc-sim-presets">
+              <button type="button" class="mc-btn sim-preset-btn" data-time="09:45">9:45 AM (Slot 1)</button>
+              <button type="button" class="mc-btn sim-preset-btn" data-time="11:20">11:20 AM (Break)</button>
+              <button type="button" class="mc-btn sim-preset-btn" data-time="12:00">12:00 PM (Slot 2)</button>
+              <button type="button" class="mc-btn sim-preset-btn" data-time="13:45">1:45 PM (Lunch)</button>
+              <button type="button" class="mc-btn sim-preset-btn" data-time="16:15">4:15 PM (Lab)</button>
+              <button type="button" class="mc-btn sim-preset-btn" data-time="18:00">6:00 PM (Clubs)</button>
+            </div>
           </div>
         </div>
       </div>
