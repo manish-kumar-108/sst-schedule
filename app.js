@@ -1612,6 +1612,7 @@ let audioCtx = null;
 window.addEventListener('DOMContentLoaded', () => {
   initSupabase();
   initScheduleData();
+  initAttendanceData();
   applyTheme(currentTheme, false);
   setupUIEventListeners();
   setupGroupButtons();
@@ -1621,6 +1622,8 @@ window.addEventListener('DOMContentLoaded', () => {
   registerServiceWorker();
   checkNotificationStatus();
   checkAuthSession();
+  checkIncomingAttendanceSync();
+  renderAttendanceModal();
   
   // Start main loop immediately
   tickRealtimeClock();
@@ -2248,6 +2251,9 @@ function updateDashboard() {
 
   // Today's Quest Log
   renderTodayScheduleList(dayName);
+
+  // Live Attendance HUD & Bunk Impact
+  updateLiveAttendanceHud(status);
 }
 
 function renderStaminaIcons(status) {
@@ -2508,6 +2514,427 @@ function applyTheme(themeName, showFeedback = true) {
 }
 
 // ==========================================
+// 6.5 SCALER ATTENDANCE DASHBOARD & BUNK PREDICTOR ENGINE
+// ==========================================
+const DEFAULT_ATTENDANCE_DATA = {
+  "ICP": {
+    id: "icp",
+    courseId: "9ed0fb02-92fc-4f4a-81f2-da9243b31a93",
+    name: "Introduction To Computer Programming",
+    shortName: "ICP",
+    total: 32,
+    attended: 24.5,
+    missed: 7,
+    late: 1,
+    streak: 2,
+    percent: 76.56,
+    aliases: ["icp", "icp - 2030", "programming", "computer programming", "c++", "python", "2d arrays", "arrays", "lab"]
+  },
+  "Maths": {
+    id: "maths",
+    courseId: "0e985904-6646-4fdc-92e8-8f4174058c6f",
+    name: "Maths for Programming",
+    shortName: "Maths",
+    total: 14,
+    attended: 11,
+    missed: 3,
+    late: 0,
+    streak: 3,
+    percent: 78.57,
+    aliases: ["maths", "math", "maths for programming", "math - 2030", "discrete", "algebra", "calculus"]
+  },
+  "WebDev": {
+    id: "webdev",
+    courseId: "webdev-101",
+    name: "Web Dev 101",
+    shortName: "Web Dev",
+    total: 24,
+    attended: 20,
+    missed: 4,
+    late: 0,
+    streak: 4,
+    percent: 83.33,
+    aliases: ["web dev", "web dev 101", "webdev", "frontend", "html", "javascript", "css"]
+  },
+  "English": {
+    id: "english",
+    courseId: "english-2030",
+    name: "English & Communication",
+    shortName: "English",
+    total: 16,
+    attended: 14,
+    missed: 2,
+    late: 0,
+    streak: 5,
+    percent: 87.50,
+    aliases: ["english", "english - 2030", "communication", "soft skills", "fiza"]
+  }
+};
+
+let attendanceData = {};
+let linkedDashboardUrl = localStorage.getItem('sst_linked_dashboard_url') || 'https://sst-dashboard.com/student/dashboard/attendance?termId=0e4be8df-230b-42e8-8b25-d4c94207dabb&courseId=0e985904-6646-4fdc-92e8-8f4174058c6f';
+
+function initAttendanceData() {
+  try {
+    const saved = localStorage.getItem('sst_attendance_data');
+    if (saved) {
+      attendanceData = JSON.parse(saved);
+    } else {
+      attendanceData = JSON.parse(JSON.stringify(DEFAULT_ATTENDANCE_DATA));
+      saveAttendanceData();
+    }
+  } catch (e) {
+    attendanceData = JSON.parse(JSON.stringify(DEFAULT_ATTENDANCE_DATA));
+  }
+}
+
+function saveAttendanceData() {
+  try {
+    localStorage.setItem('sst_attendance_data', JSON.stringify(attendanceData));
+  } catch (e) {
+    console.warn('[Attendance] Storage error:', e);
+  }
+}
+
+function calculateAttendanceImpact(course) {
+  if (!course) return null;
+  const total = Number(course.total) || 0;
+  const attended = Number(course.attended) || 0;
+  if (total === 0) {
+    return {
+      currentRate: 0,
+      attendRate: 100,
+      attendGain: 100,
+      missRate: 0,
+      missLoss: 0,
+      canBunk: false,
+      bunksLeft: 0,
+      classesNeeded: 0,
+      isCritical: false
+    };
+  }
+
+  const currentRate = (attended / total) * 100;
+  const attendRate = ((attended + 1) / (total + 1)) * 100;
+  const missRate = (attended / (total + 1)) * 100;
+
+  const attendGain = attendRate - currentRate;
+  const missLoss = currentRate - missRate;
+
+  // Safe bunks remaining before dropping strictly below 75%
+  let bunksLeft = Math.floor((attended / 0.75) - total);
+  if (bunksLeft < 0) bunksLeft = 0;
+
+  // Classes needed in a row to reach/recover 75% if currently below 75%
+  let classesNeeded = 0;
+  if (currentRate < 75) {
+    classesNeeded = Math.ceil((0.75 * total - attended) / 0.25);
+  }
+
+  const isCritical = missRate < 75;
+
+  return {
+    currentRate: Number(currentRate.toFixed(2)),
+    attendRate: Number(attendRate.toFixed(2)),
+    attendGain: Number(attendGain.toFixed(2)),
+    missRate: Number(missRate.toFixed(2)),
+    missLoss: Number(missLoss.toFixed(2)),
+    canBunk: bunksLeft > 0,
+    bunksLeft,
+    classesNeeded,
+    isCritical
+  };
+}
+
+function getAttendanceForClassTitle(title) {
+  if (!title) return null;
+  const lower = title.toLowerCase();
+
+  // Non-academic activities
+  if (lower.includes('lunch') || lower.includes('break') || lower.includes('club') || lower.includes('mentor')) {
+    return null;
+  }
+
+  for (const key of Object.keys(attendanceData)) {
+    const course = attendanceData[key];
+    if (course.aliases && course.aliases.some(alias => lower.includes(alias))) {
+      return course;
+    }
+    if (lower.includes(course.name.toLowerCase()) || lower.includes(course.shortName.toLowerCase())) {
+      return course;
+    }
+  }
+
+  // Fallback to first available academic course
+  const firstKey = Object.keys(attendanceData)[0];
+  return firstKey ? attendanceData[firstKey] : null;
+}
+
+function updateLiveAttendanceHud(status) {
+  const hud = document.getElementById('liveAttendanceHud');
+  const courseNameEl = document.getElementById('hudCourseName');
+  const currentBadgeEl = document.getElementById('hudCurrentBadge');
+  const attendRateEl = document.getElementById('hudAttendRate');
+  const attendDiffEl = document.getElementById('hudAttendDiff');
+  const missRateEl = document.getElementById('hudMissRate');
+  const missDiffEl = document.getElementById('hudMissDiff');
+  const safetyBanner = document.getElementById('hudSafetyBanner');
+  const safetyIcon = document.getElementById('hudSafetyIcon');
+  const safetyText = document.getElementById('hudSafetyText');
+  const headerAttText = document.getElementById('headerAttendanceText');
+
+  // Compute Overall Campus Attendance
+  let totalAttended = 0, totalClasses = 0;
+  Object.values(attendanceData).forEach(c => {
+    totalAttended += Number(c.attended) || 0;
+    totalClasses += Number(c.total) || 0;
+  });
+  const overallRate = totalClasses > 0 ? ((totalAttended / totalClasses) * 100).toFixed(1) : '75.0';
+  if (headerAttText) {
+    headerAttText.textContent = `${overallRate}% ATTENDANCE`;
+  }
+
+  if (!hud) return;
+
+  // Determine course to predict for: current class if active, else next class
+  let targetClassTitle = status ? (status.title || status.nextClassTitle) : '';
+  let course = getAttendanceForClassTitle(targetClassTitle);
+  if (!course) {
+    // Pick the most vulnerable course (lowest rate)
+    const sorted = Object.values(attendanceData).sort((a, b) => (a.attended / a.total) - (b.attended / b.total));
+    course = sorted[0];
+  }
+
+  if (!course) {
+    hud.style.display = 'none';
+    return;
+  }
+
+  hud.style.display = 'block';
+  const impact = calculateAttendanceImpact(course);
+
+  if (courseNameEl) courseNameEl.textContent = course.name;
+  if (currentBadgeEl) {
+    currentBadgeEl.textContent = `${impact.currentRate}%`;
+    currentBadgeEl.style.backgroundColor = impact.currentRate >= 80 ? '#22c55e' : (impact.currentRate >= 75 ? '#eab308' : '#ef4444');
+  }
+
+  if (attendRateEl) attendRateEl.textContent = `${impact.attendRate}%`;
+  if (attendDiffEl) attendDiffEl.textContent = `+${impact.attendGain}% Gain 📈`;
+
+  if (missRateEl) missRateEl.textContent = `${impact.missRate}%`;
+  if (missDiffEl) missDiffEl.textContent = `-${impact.missLoss}% Drop 📉`;
+
+  if (safetyBanner) {
+    if (impact.isCritical) {
+      safetyBanner.className = 'att-safety-banner banner-critical';
+      if (safetyIcon) safetyIcon.textContent = '🚨';
+      if (safetyText) safetyText.textContent = `CRITICAL: Missing this class drops your attendance below 75% (to ${impact.missRate}%)!`;
+    } else if (impact.bunksLeft === 0) {
+      safetyBanner.className = 'att-safety-banner banner-critical';
+      if (safetyIcon) safetyIcon.textContent = '⚠️';
+      if (safetyText) safetyText.textContent = '0 Safe Bunks Left! Missing this class drops you right to the 75% boundary.';
+    } else {
+      safetyBanner.className = 'att-safety-banner banner-safe';
+      if (safetyIcon) safetyIcon.textContent = '🛡️';
+      if (safetyText) safetyText.textContent = `SAFE BUFFER: You can safely miss ${impact.bunksLeft} class${impact.bunksLeft > 1 ? 'es' : ''} and remain above 75%.`;
+    }
+  }
+}
+
+function generateBookmarkletCode() {
+  const currentOrigin = window.location.origin + window.location.pathname;
+  return `javascript:(function(){try{var c=[];document.querySelectorAll('*').forEach(function(el){if(el.children.length===0&&/^(\\d+(\\.\\d+)?)%$/.test(el.textContent.trim())){var p=parseFloat(RegExp.$1),card=el.closest('div');if(card){var lines=(card.innerText||'').split('\\n').map(function(s){return s.trim();}).filter(Boolean),subj='',tot=0,att=0,mis=0;for(var i=0;i<lines.length;i++){if(/math|prog|web|icp|eng|dsa|algo|data/i.test(lines[i])&&!/total|attended|missed|%/i.test(lines[i]))subj=lines[i];if(/^(\\d+)\\s*total/i.test(lines[i]))tot=parseInt(RegExp.$1);if(/^(\\d+)\\s*attended/i.test(lines[i]))att=parseInt(RegExp.$1);if(/^(\\d+)\\s*missed/i.test(lines[i]))mis=parseInt(RegExp.$1);}if(subj&&tot>0&&!c.some(function(x){return x.name===subj;})){c.push({name:subj,percent:p,total:tot,attended:att,missed:mis});}}}});var p=encodeURIComponent(JSON.stringify({courses:c,syncedAt:Date.now()}));window.open('${currentOrigin}#sync_attendance='+p,'_blank');}catch(e){alert('SST Sync: '+e.message);}})();`;
+}
+
+function checkIncomingAttendanceSync() {
+  if (window.location.hash.includes('sync_attendance=')) {
+    try {
+      const match = window.location.hash.match(/sync_attendance=([^&]+)/);
+      if (match && match[1]) {
+        const payload = JSON.parse(decodeURIComponent(match[1]));
+        if (payload && Array.isArray(payload.courses) && payload.courses.length > 0) {
+          payload.courses.forEach(sc => {
+            const course = getAttendanceForClassTitle(sc.name);
+            if (course) {
+              if (sc.total) course.total = sc.total;
+              if (sc.attended) course.attended = sc.attended;
+              if (sc.missed) course.missed = sc.missed;
+              course.percent = sc.percent || Number(((course.attended / course.total) * 100).toFixed(2));
+            }
+          });
+          saveAttendanceData();
+          renderAttendanceModal();
+          updateDashboard();
+          showToast('🎉 Scaler Attendance Synced Successfully!');
+        }
+      }
+    } catch (err) {
+      console.warn('[Attendance Sync]', err);
+    }
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  }
+}
+
+function renderAttendanceModal() {
+  const container = document.getElementById('attCoursesGrid');
+  const simSelect = document.getElementById('simCourseSelect');
+  const overallRateEl = document.getElementById('overallAttendanceRate');
+  const overallTotalEl = document.getElementById('overallTotalClasses');
+  const overallAttEl = document.getElementById('overallAttendedCount');
+  const overallMissedEl = document.getElementById('overallMissedClasses');
+  const overallBunkBufferEl = document.getElementById('overallBunkBuffer');
+  const overallTagEl = document.getElementById('overallStatusTag');
+  const bookmarkletBtn = document.getElementById('scalerBookmarkletBtn');
+  const urlInput = document.getElementById('scalerDashboardUrlInput');
+
+  if (bookmarkletBtn) {
+    bookmarkletBtn.href = generateBookmarkletCode();
+  }
+  if (urlInput && linkedDashboardUrl) {
+    urlInput.value = linkedDashboardUrl;
+  }
+
+  let totalAttended = 0, totalClasses = 0, totalMissed = 0;
+  const courseKeys = Object.keys(attendanceData);
+
+  if (simSelect) {
+    simSelect.innerHTML = courseKeys.map(k => `<option value="${k}">${attendanceData[k].name}</option>`).join('');
+  }
+
+  if (container) {
+    container.innerHTML = courseKeys.map(k => {
+      const c = attendanceData[k];
+      totalAttended += Number(c.attended) || 0;
+      totalClasses += Number(c.total) || 0;
+      totalMissed += Number(c.missed) || 0;
+      const impact = calculateAttendanceImpact(c);
+
+      const rateClass = impact.currentRate >= 80 ? 'rate-safe' : (impact.currentRate >= 75 ? 'rate-warn' : 'rate-danger');
+      const barColor = impact.currentRate >= 80 ? '#22c55e' : (impact.currentRate >= 75 ? '#eab308' : '#ef4444');
+
+      return `
+        <div class="att-course-card" data-course-key="${k}">
+          <div class="course-card-top">
+            <div class="course-card-name">${c.name}</div>
+            <div class="course-rate-badge ${rateClass}">${impact.currentRate}%</div>
+          </div>
+
+          <div class="course-progress-bar-wrap">
+            <div class="course-progress-bar-fill" style="width: ${Math.min(100, impact.currentRate)}%; background: ${barColor};"></div>
+          </div>
+
+          <div class="course-stats-mini-row">
+            <span>Attended: <strong>${c.attended}</strong> / ${c.total}</span>
+            <span>Missed: <strong style="color: #f87171;">${c.missed}</strong></span>
+            <span>Safe Bunks: <strong style="color: #38bdf8;">${impact.bunksLeft}</strong></span>
+          </div>
+
+          <div class="course-impact-row">
+            <div class="course-impact-pill pill-attend">Attend: ${impact.attendRate}% (+${impact.attendGain}%)</div>
+            <div class="course-impact-pill pill-miss">Miss: ${impact.missRate}% (-${impact.missLoss}%)</div>
+          </div>
+
+          <div class="course-stepper-row">
+            <span style="font-size: 9px; color: #94a3b8;">Adjust Count:</span>
+            <div class="stepper-btn-group">
+              <button class="stepper-mini-btn" onclick="window.adjustCourseAttendance('${k}', 1, 0)" title="Add 1 Attended Class">+1 Attend</button>
+              <button class="stepper-mini-btn" onclick="window.adjustCourseAttendance('${k}', 0, 1)" title="Add 1 Missed Class">+1 Miss</button>
+              <button class="stepper-mini-btn" onclick="window.adjustCourseAttendance('${k}', -1, 0)" title="Subtract 1 Attended Class">-1</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Update Overall Stats
+  const overallPct = totalClasses > 0 ? ((totalAttended / totalClasses) * 100).toFixed(1) : '75.0';
+  if (overallRateEl) overallRateEl.textContent = `${overallPct}%`;
+  if (overallTotalEl) overallTotalEl.textContent = totalClasses;
+  if (overallAttEl) overallAttEl.textContent = `${totalAttended} Attended`;
+  if (overallMissedEl) overallMissedEl.textContent = totalMissed;
+
+  const totalBunkBuffer = Math.max(0, Math.floor((totalAttended / 0.75) - totalClasses));
+  if (overallBunkBufferEl) overallBunkBufferEl.textContent = `${totalBunkBuffer} Left`;
+
+  if (overallTagEl) {
+    if (Number(overallPct) >= 75) {
+      overallTagEl.className = 'stat-tag tag-safe';
+      overallTagEl.textContent = '🛡️ Above 75% Target';
+    } else {
+      overallTagEl.className = 'stat-tag tag-danger';
+      overallTagEl.textContent = '🚨 Below 75% Target';
+    }
+  }
+
+  updateBunkSimulatorResult();
+}
+
+function adjustCourseAttendance(key, dAttended, dMissed) {
+  if (!attendanceData[key]) return;
+  const c = attendanceData[key];
+  if (dAttended > 0) {
+    c.attended += dAttended;
+    c.total += dAttended;
+  } else if (dAttended < 0 && c.attended > 0) {
+    c.attended += dAttended;
+    c.total = Math.max(0, c.total + dAttended);
+  }
+  if (dMissed > 0) {
+    c.missed += dMissed;
+    c.total += dMissed;
+  } else if (dMissed < 0 && c.missed > 0) {
+    c.missed += dMissed;
+    c.total = Math.max(0, c.total + dMissed);
+  }
+  c.percent = c.total > 0 ? Number(((c.attended / c.total) * 100).toFixed(2)) : 0;
+  saveAttendanceData();
+  renderAttendanceModal();
+  updateDashboard();
+}
+window.adjustCourseAttendance = adjustCourseAttendance;
+
+function updateBunkSimulatorResult() {
+  const simSelect = document.getElementById('simCourseSelect');
+  const missInput = document.getElementById('simMissCountInput');
+  const resultCard = document.getElementById('simResultCard');
+  if (!simSelect || !missInput || !resultCard) return;
+
+  const courseKey = simSelect.value;
+  const course = attendanceData[courseKey];
+  const missCount = Math.max(0, parseInt(missInput.value, 10) || 0);
+
+  if (!course) {
+    resultCard.innerHTML = 'Select a course to simulate.';
+    return;
+  }
+
+  const currentRate = course.total > 0 ? (course.attended / course.total) * 100 : 0;
+  const projectedTotal = course.total + missCount;
+  const projectedRate = projectedTotal > 0 ? (course.attended / projectedTotal) * 100 : 0;
+  const drop = currentRate - projectedRate;
+
+  let recoveryText = '';
+  if (projectedRate < 75) {
+    const needed = Math.ceil((0.75 * projectedTotal - course.attended) / 0.25);
+    recoveryText = `<div style="margin-top: 6px; color: #f87171; font-weight: 700;">🚨 DANGER: You will drop below 75%! You would need to attend <strong>${needed} consecutive classes</strong> without missing any to restore 75%.</div>`;
+  } else {
+    const remainingSafe = Math.floor((course.attended / 0.75) - projectedTotal);
+    recoveryText = `<div style="margin-top: 6px; color: #4ade80; font-weight: 700;">✅ SAFE: You remain above 75%! You would still have <strong>${Math.max(0, remainingSafe)} bunks left</strong>.</div>`;
+  }
+
+  resultCard.innerHTML = `
+    <div>If you miss <strong>${missCount}</strong> upcoming class${missCount === 1 ? '' : 'es'} in <strong>${course.name}</strong>:</div>
+    <div style="font-size: 14px; font-weight: 800; margin: 4px 0; color: #38bdf8;">
+      ${currentRate.toFixed(2)}% ➔ <span style="color: ${projectedRate >= 75 ? '#4ade80' : '#ef4444'};">${projectedRate.toFixed(2)}%</span> 
+      <span style="font-size: 11px; color: #f87171;">(-${drop.toFixed(2)}% drop)</span>
+    </div>
+    ${recoveryText}
+  `;
+}
+
+// ==========================================
 // 7. EVENT LISTENERS & CONTROLS
 // ==========================================
 function setupUIEventListeners() {
@@ -2572,6 +2999,130 @@ function setupUIEventListeners() {
     logoutBtn.addEventListener('click', () => {
       playThemeSound('click');
       handleLogout();
+    });
+  }
+
+  // Scaler Attendance Modal Controls
+  const attendanceModal = document.getElementById('attendanceModal');
+  const openAttendanceBtn = document.getElementById('openAttendanceBtn');
+  const hudOpenModalBtn = document.getElementById('hudOpenModalBtn');
+  const closeAttendanceModalBtn = document.getElementById('closeAttendanceModalBtn');
+
+  if (openAttendanceBtn) {
+    openAttendanceBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      renderAttendanceModal();
+      if (attendanceModal) attendanceModal.classList.add('open');
+    });
+  }
+
+  if (hudOpenModalBtn) {
+    hudOpenModalBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      renderAttendanceModal();
+      if (attendanceModal) attendanceModal.classList.add('open');
+    });
+  }
+
+  if (closeAttendanceModalBtn) {
+    closeAttendanceModalBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      if (attendanceModal) attendanceModal.classList.remove('open');
+    });
+  }
+
+  if (attendanceModal) {
+    attendanceModal.addEventListener('click', (e) => {
+      if (e.target === attendanceModal) {
+        attendanceModal.classList.remove('open');
+      }
+    });
+  }
+
+  // Copy Bookmarklet Button
+  const copyBookmarkletBtn = document.getElementById('copyBookmarkletBtn');
+  if (copyBookmarkletBtn) {
+    copyBookmarkletBtn.addEventListener('click', () => {
+      const code = generateBookmarkletCode();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(() => {
+          playThemeSound('click');
+          showToast('📋 Bookmarklet copied! Paste into bookmarks URL.');
+        }).catch(() => {
+          prompt('Copy bookmarklet code below:', code);
+        });
+      } else {
+        prompt('Copy bookmarklet code below:', code);
+      }
+    });
+  }
+
+  // Bookmarklet Click Guidance
+  const scalerBookmarkletBtn = document.getElementById('scalerBookmarkletBtn');
+  if (scalerBookmarkletBtn) {
+    scalerBookmarkletBtn.addEventListener('click', () => {
+      showToast('💡 Tip: Drag this button to your Bookmarks Bar, or click Copy Script!');
+    });
+  }
+
+  // Save Dashboard URL
+  const saveDashboardUrlBtn = document.getElementById('saveDashboardUrlBtn');
+  const scalerDashboardUrlInput = document.getElementById('scalerDashboardUrlInput');
+  if (saveDashboardUrlBtn && scalerDashboardUrlInput) {
+    saveDashboardUrlBtn.addEventListener('click', () => {
+      const url = scalerDashboardUrlInput.value.trim();
+      if (url) {
+        linkedDashboardUrl = url;
+        localStorage.setItem('sst_linked_dashboard_url', url);
+        playThemeSound('click');
+        showToast('🔗 Scaler Dashboard Link Connected!');
+        const sub = document.getElementById('attModalSubtitle');
+        if (sub) sub.textContent = 'Connected: ' + url.slice(0, 45) + '...';
+      }
+    });
+  }
+
+  // Reset Attendance Defaults
+  const resetAttendanceBtn = document.getElementById('resetAttendanceBtn');
+  if (resetAttendanceBtn) {
+    resetAttendanceBtn.addEventListener('click', () => {
+      if (confirm('Reset attendance stats back to default Scaler dashboard records?')) {
+        attendanceData = JSON.parse(JSON.stringify(DEFAULT_ATTENDANCE_DATA));
+        saveAttendanceData();
+        renderAttendanceModal();
+        updateDashboard();
+        playThemeSound('click');
+        showToast('🔄 Reset to Scaler defaults');
+      }
+    });
+  }
+
+  // What-If Simulator controls
+  const simCourseSelect = document.getElementById('simCourseSelect');
+  const simMissCountInput = document.getElementById('simMissCountInput');
+  const simMissMinusBtn = document.getElementById('simMissMinusBtn');
+  const simMissPlusBtn = document.getElementById('simMissPlusBtn');
+
+  if (simCourseSelect) {
+    simCourseSelect.addEventListener('change', updateBunkSimulatorResult);
+  }
+  if (simMissCountInput) {
+    simMissCountInput.addEventListener('input', updateBunkSimulatorResult);
+  }
+  if (simMissMinusBtn && simMissCountInput) {
+    simMissMinusBtn.addEventListener('click', () => {
+      let val = parseInt(simMissCountInput.value, 10) || 1;
+      if (val > 0) {
+        simMissCountInput.value = val - 1;
+        updateBunkSimulatorResult();
+      }
+    });
+  }
+  if (simMissPlusBtn && simMissCountInput) {
+    simMissPlusBtn.addEventListener('click', () => {
+      let val = parseInt(simMissCountInput.value, 10) || 0;
+      simMissCountInput.value = val + 1;
+      updateBunkSimulatorResult();
     });
   }
 

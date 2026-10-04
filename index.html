@@ -181,6 +181,9 @@
           <button id="openTimetableBtn" class="mc-btn mc-btn-green" title="Open Full Weekly Timetable" aria-label="Timetable">
             <span>📖</span> TIMETABLE
           </button>
+          <button id="openAttendanceBtn" class="mc-btn mc-btn-purple" title="Scaler Attendance & Bunk Predictor" aria-label="Attendance">
+            <span>📊</span> <span id="headerAttendanceText">ATTENDANCE</span>
+          </button>
 
           <!-- User Profile & Logout Pill -->
           <div class="mc-user-pill" id="userProfilePill" style="display: none;">
@@ -299,6 +302,38 @@
         <!-- Energy / Hearts / Hunger Icons -->
         <div class="mc-icons-row" id="staminaIconsRow">
           ❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️
+        </div>
+
+        <!-- ATTENDANCE IMPACT PREDICTOR (SCALER DASHBOARD LINKED) -->
+        <div class="mc-attendance-hud" id="liveAttendanceHud">
+          <div class="att-hud-top">
+            <div class="att-hud-title-wrap">
+              <span class="att-hud-icon">📊</span>
+              <span class="att-hud-course-name" id="hudCourseName">Introduction To Computer Programming</span>
+              <span class="att-hud-rate-badge" id="hudCurrentBadge">76.56%</span>
+            </div>
+            <button class="att-hud-link-btn" id="hudOpenModalBtn" type="button" title="Open Scaler Attendance Center">
+              <span>⚡</span> SCALER SYNC
+            </button>
+          </div>
+
+          <div class="att-impact-grid">
+            <div class="att-impact-card impact-attend">
+              <div class="impact-title">IF YOU ATTEND TODAY</div>
+              <div class="impact-stat" id="hudAttendRate">77.27%</div>
+              <div class="impact-diff diff-gain" id="hudAttendDiff">+0.71% Gain 📈</div>
+            </div>
+            <div class="att-impact-card impact-miss">
+              <div class="impact-title">IF YOU MISS / BUNK</div>
+              <div class="impact-stat" id="hudMissRate">74.24%</div>
+              <div class="impact-diff diff-loss" id="hudMissDiff">-2.32% Drop 📉</div>
+            </div>
+          </div>
+
+          <div class="att-safety-banner" id="hudSafetyBanner">
+            <span class="safety-icon" id="hudSafetyIcon">⚠️</span>
+            <span class="safety-text" id="hudSafetyText">CRITICAL: Missing this class drops your attendance below 75%!</span>
+          </div>
         </div>
       </div>
 
@@ -502,6 +537,136 @@
             <button class="mc-btn theme-apply-btn">APPLY CUTE PINK</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SCALER ATTENDANCE DASHBOARD & BUNK MODAL   -->
+  <!-- ========================================== -->
+  <div class="mc-modal-overlay" id="attendanceModal" aria-modal="true" role="dialog" aria-label="Scaler Attendance Dashboard">
+    <div class="mc-modal-box attendance-modal-box">
+      
+      <!-- Modal Header -->
+      <div class="mc-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">📊</span>
+          <div>
+            <div class="mc-modal-title">SCALER ATTENDANCE DASHBOARD</div>
+            <div class="mc-modal-sub" id="attModalSubtitle">Live Sync with sst-dashboard.com</div>
+          </div>
+        </div>
+        <button class="mc-btn mc-btn-red" id="closeAttendanceModalBtn" aria-label="Close Attendance Modal">✕</button>
+      </div>
+
+      <div class="mc-modal-body">
+        
+        <!-- Overall Stats Header Banner -->
+        <div class="att-overall-banner">
+          <div class="overall-stat-item">
+            <span class="stat-label">OVERALL ATTENDANCE</span>
+            <span class="stat-val stat-val-main" id="overallAttendanceRate">79.2%</span>
+            <span class="stat-tag tag-safe" id="overallStatusTag">🛡️ Above 75% Target</span>
+          </div>
+          <div class="overall-stat-item">
+            <span class="stat-label">TOTAL CLASSES</span>
+            <span class="stat-val" id="overallTotalClasses">70</span>
+            <span class="stat-sub" id="overallAttendedCount">55.5 Attended</span>
+          </div>
+          <div class="overall-stat-item">
+            <span class="stat-label">CLASSES MISSED</span>
+            <span class="stat-val stat-val-miss" id="overallMissedClasses">14</span>
+            <span class="stat-sub">Across 4 Courses</span>
+          </div>
+          <div class="overall-stat-item">
+            <span class="stat-label">BUNK BUFFER</span>
+            <span class="stat-val stat-val-bunk" id="overallBunkBuffer">2 Left</span>
+            <span class="stat-sub">Before dropping &lt; 75%</span>
+          </div>
+        </div>
+
+        <!-- 1-Click Scaler Dashboard Auto-Sync Box -->
+        <div class="sync-dashboard-box">
+          <div class="sync-box-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 16px;">⚡</span>
+              <span class="sync-box-title">1-CLICK SCALER DASHBOARD AUTO-SYNC</span>
+            </div>
+            <span class="sync-live-badge">sst-dashboard.com</span>
+          </div>
+          <p class="sync-box-desc">
+            Drag the green button below directly to your browser's <strong>Bookmarks Bar</strong>. When viewing your <strong>sst-dashboard.com</strong> attendance, click it to auto-fetch all courses and sync attendance instantly!
+          </p>
+
+          <div class="sync-actions-row">
+            <a class="bookmarklet-btn" id="scalerBookmarkletBtn" href="#" title="Drag to Bookmarks Bar!">
+              ⚡ Drag to Bookmarks: Sync SST Attendance
+            </a>
+            <button class="mc-btn mc-btn-gold" id="copyBookmarkletBtn" type="button">
+              <span>📋</span> COPY SCRIPT
+            </button>
+            <a href="https://sst-dashboard.com/student/dashboard/attendance" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue">
+              <span>🌐</span> OPEN DASHBOARD
+            </a>
+          </div>
+
+          <!-- Direct URL Link Input -->
+          <div class="sync-url-input-wrap">
+            <input 
+              type="url" 
+              id="scalerDashboardUrlInput" 
+              class="sync-url-input" 
+              placeholder="Paste your Scaler Dashboard link (e.g., https://sst-dashboard.com/student/dashboard/attendance?termId=...&courseId=...)"
+            />
+            <button class="mc-btn mc-btn-green" id="saveDashboardUrlBtn" type="button">
+              <span>🔗</span> CONNECT URL
+            </button>
+          </div>
+        </div>
+
+        <!-- Subject Attendance Cards Grid -->
+        <div class="att-courses-section">
+          <div class="att-section-title-row">
+            <div class="att-section-title">
+              <span>📚</span> YOUR ACTIVE SCALER COURSES &amp; ATTENDANCE
+            </div>
+            <button class="mc-btn mc-btn-sm" id="resetAttendanceBtn" title="Reset to Scaler defaults">
+              <span>🔄</span> Reset Defaults
+            </button>
+          </div>
+
+          <div class="att-courses-grid" id="attCoursesGrid">
+            <!-- Dynamically populated course cards with real-time bunk impact -->
+          </div>
+        </div>
+
+        <!-- What-If Bunk Simulator Panel -->
+        <div class="bunk-simulator-panel">
+          <div class="sim-panel-header">
+            <span>🧮</span>
+            <span class="sim-panel-title">WHAT-IF BUNK CALCULATOR</span>
+          </div>
+          <div class="sim-controls-grid">
+            <div class="sim-control-group">
+              <label for="simCourseSelect">Select Course:</label>
+              <select id="simCourseSelect" class="sim-select">
+                <!-- Courses injected via JS -->
+              </select>
+            </div>
+            <div class="sim-control-group">
+              <label for="simMissCountInput">How many upcoming classes will you miss / bunk?</label>
+              <div class="sim-stepper">
+                <button class="sim-step-btn" id="simMissMinusBtn" type="button">-</button>
+                <input type="number" id="simMissCountInput" class="sim-num-input" value="1" min="0" max="20" />
+                <button class="sim-step-btn" id="simMissPlusBtn" type="button">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="sim-result-card" id="simResultCard">
+            <!-- Dynamic calculation output -->
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
