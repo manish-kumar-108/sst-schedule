@@ -168,8 +168,13 @@
           </button>
           <div>
             <h1 class="mc-title" id="appTitleText">SST CRAFT</h1>
-            <div class="mc-subtitle" id="appSubtitleText">COLLEGE SCHEDULE & LIVE TRACKER</div>
+            <div class="mc-subtitle" id="appSubtitleText">COLLEGE SCHEDULE &amp; LIVE TRACKER</div>
           </div>
+          <!-- Scaler Dashboard Announcements & Notifications Button Beside SST Schedule -->
+          <button class="mc-btn mc-notif-bell-btn" id="openAnnouncementsBtn" title="Scaler Real-Time Announcements &amp; Deadlines" aria-label="Announcements &amp; Notifications">
+            <span class="notif-bell-icon">🔔</span>
+            <span class="notif-badge-pill" id="announcementsBadgeCount">3</span>
+          </button>
         </div>
         
         <div class="mc-header-controls">
@@ -186,23 +191,20 @@
           <button id="openTimetableBtn" class="mc-btn mc-btn-green" title="Open Full Weekly Timetable" aria-label="Timetable">
             <span>📖</span> TIMETABLE
           </button>
-          <button id="openAttendanceBtn" class="mc-btn mc-btn-purple" title="Scaler Attendance & Bunk Predictor" aria-label="Attendance">
+          <button id="openAttendanceBtn" class="mc-btn mc-btn-purple" title="Scaler Attendance &amp; Bunk Predictor" aria-label="Attendance">
             <span>📊</span> <span id="headerAttendanceText">ATTENDANCE</span>
           </button>
-          <button id="openMessBtn" class="mc-btn mc-btn-orange" title="SST Mess & Meal QR Pass (30s Live Refresh)" aria-label="Meal QR Pass">
+          <button id="openMessBtn" class="mc-btn mc-btn-orange" title="SST Mess &amp; Meal QR Pass (30s Live Refresh)" aria-label="Meal QR Pass">
             <span>🍱</span> <span id="headerMessText">MEAL QR</span>
           </button>
 
-          <!-- User Profile & Logout Pill -->
-          <div class="mc-user-pill" id="userProfilePill" style="display: none;">
+          <!-- User Profile Pill (Cleaned: logout button safely relocated below UI options) -->
+          <div class="mc-user-pill" id="userProfilePill" style="display: none;" title="Your Scaler Account Profile (Click to View Theme &amp; Account Settings)">
             <img id="userAvatarImg" class="user-avatar" src="" alt="Avatar" />
             <div class="user-info-text">
               <span class="user-email" id="userEmailText">student@scaler.com</span>
               <span class="user-scaler-tag">✓ SCALER</span>
             </div>
-            <button id="logoutBtn" class="mc-btn mc-logout-btn" title="Sign Out from Scaler Portal" aria-label="Sign Out">
-              <span>🚪</span>
-            </button>
           </div>
         </div>
       </div>
@@ -549,6 +551,26 @@
             </div>
           </div>
         </div>
+
+        <!-- SCALER ACCOUNT & LOGOUT (BELOW ALL UI OPTIONS) -->
+        <div class="theme-account-panel" id="themeAccountPanel">
+          <div class="theme-account-info">
+            <div class="account-avatar-wrap">
+              <img id="themeAccountAvatar" class="theme-account-avatar" src="" alt="Avatar" />
+            </div>
+            <div class="account-details">
+              <div class="account-name-row">
+                <span class="account-user-name" id="themeAccountName">Scaler Student</span>
+                <span class="account-badge">✓ SCALER SSO</span>
+              </div>
+              <div class="account-user-email" id="themeAccountEmail">student@scaler.com</div>
+              <div class="account-session-hint">Session secured with Supabase Auth</div>
+            </div>
+          </div>
+          <button id="logoutBtn" class="mc-btn mc-btn-red theme-logout-btn" type="button" title="Sign out of Scaler App">
+            <span>🚪</span> SIGN OUT / LOGOUT
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -841,6 +863,99 @@
           </a>
           <a href="https://mess.sst-dashboard.com/student/dashboard/history" target="_blank" rel="noopener noreferrer" class="mess-external-link">
             <span>📅</span> Meal History ↗
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGOUT CONFIRMATION POPUP MODAL (PREVENTS ACCIDENTAL LOGOUT) -->
+  <div class="mc-modal-overlay" id="logoutConfirmModal" role="dialog" aria-modal="true" aria-labelledby="logoutConfirmTitle">
+    <div class="mc-modal-content logout-confirm-box">
+      <div class="mc-modal-header">
+        <div class="mc-modal-title" id="logoutConfirmTitle">
+          <span>🚪</span> CONFIRM SIGN OUT
+        </div>
+        <button id="closeLogoutConfirmBtn" class="mc-btn mc-btn-red" style="padding: 6px 12px; font-size: 10px;" aria-label="Close">
+          ✕
+        </button>
+      </div>
+      <div class="mc-modal-body logout-confirm-body">
+        <div class="logout-icon-glow">⚠️</div>
+        <div class="logout-confirm-heading">Are you sure you want to log out?</div>
+        <p class="logout-confirm-desc">
+          You are currently signed in as <strong id="logoutConfirmEmail">student@scaler.com</strong>.
+          Signing out will end your session and require logging back in with your Scaler Google account.
+        </p>
+        <div class="logout-confirm-actions">
+          <button id="cancelLogoutBtn" class="mc-btn mc-btn-green" type="button">
+            <span>🛡️</span> STAY LOGGED IN
+          </button>
+          <button id="confirmLogoutBtn" class="mc-btn mc-btn-red" type="button">
+            <span>🚪</span> YES, LOG OUT
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- SCALER ANNOUNCEMENTS & NOTIFICATIONS MODAL -->
+  <!-- ========================================== -->
+  <div class="mc-modal-overlay" id="announcementsModal" role="dialog" aria-modal="true" aria-labelledby="announcementsModalTitle">
+    <div class="mc-modal-content announcements-modal-box">
+      
+      <!-- Modal Header -->
+      <div class="mc-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">📢</span>
+          <div>
+            <div class="mc-modal-title" id="announcementsModalTitle">SCALER DASHBOARD ANNOUNCEMENTS</div>
+            <div class="mc-modal-sub" id="announcementsModalSub">Real-time sync with sst-dashboard.com/student/dashboard/announcements</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button id="syncAnnouncementsBtn" class="mc-btn mc-btn-gold" style="font-size: 9px; padding: 6px 12px;" title="Refresh Announcements">
+            <span>🔄</span> SYNC REAL-TIME
+          </button>
+          <button id="closeAnnouncementsModalBtn" class="mc-btn mc-btn-red" style="padding: 6px 12px; font-size: 10px;" aria-label="Close">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div class="mc-modal-body announcements-modal-body">
+        
+        <!-- Search & Live Status Bar -->
+        <div class="ann-controls-bar">
+          <div class="ann-search-wrapper">
+            <span class="ann-search-icon">🔍</span>
+            <input type="text" id="announcementSearchInput" class="ann-search-input" placeholder="Search announcements, forms, topics..." autocomplete="off">
+            <button id="clearAnnSearchBtn" class="ann-clear-search" style="display: none;" title="Clear search">✕</button>
+          </div>
+          <div class="ann-status-pill" id="annRealtimeStatus">
+            <span class="ann-live-dot"></span> Live Scaler Feed
+          </div>
+        </div>
+
+        <!-- Dynamic Category Filter Tabs (Smart AI Powered) -->
+        <div class="ann-category-tabs" id="annCategoryTabs" role="tablist">
+          <!-- Dynamically populated and filtered by JS -->
+        </div>
+
+        <!-- Announcements Feed Container -->
+        <div class="ann-feed-container" id="announcementsFeedContainer">
+          <!-- Dynamically rendered announcement cards by JS -->
+        </div>
+
+        <!-- Scaler Dashboard External Sync Footer -->
+        <div class="ann-footer-bridge">
+          <div class="ann-bridge-text">
+            <span>🌐</span> Announcements synced from your official Scaler Student Portal
+          </div>
+          <a href="https://sst-dashboard.com/student/dashboard/announcements" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue ann-bridge-btn">
+            <span>↗</span> OPEN SST-DASHBOARD.COM ANNOUNCEMENTS
           </a>
         </div>
 

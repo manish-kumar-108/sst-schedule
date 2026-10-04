@@ -1637,13 +1637,10 @@ function updateUserProfileUI(user) {
   const meta = user.user_metadata || {};
   const avatarUrl = meta.avatar_url || meta.picture || '';
   const fullName = meta.full_name || meta.name || user.email.split('@')[0];
+  const dicebearUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`;
 
   if (avatarImg) {
-    if (avatarUrl) {
-      avatarImg.src = avatarUrl;
-    } else {
-      avatarImg.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`;
-    }
+    avatarImg.src = avatarUrl || dicebearUrl;
     avatarImg.alt = fullName;
   }
 
@@ -1651,6 +1648,14 @@ function updateUserProfileUI(user) {
     emailText.textContent = user.email;
     emailText.title = `Signed in as ${user.email} (${fullName})`;
   }
+
+  // Update Theme Modal Account Section (below UI options)
+  const themeAvatar = document.getElementById('themeAccountAvatar');
+  const themeName = document.getElementById('themeAccountName');
+  const themeEmail = document.getElementById('themeAccountEmail');
+  if (themeAvatar) themeAvatar.src = avatarUrl || dicebearUrl;
+  if (themeName) themeName.textContent = fullName;
+  if (themeEmail) themeEmail.textContent = user.email;
 }
 
 async function handleLogout() {
@@ -2339,6 +2344,9 @@ function updateDashboard() {
 
   // Live Mess Meal Pass HUD
   updateLiveMessHud();
+
+  // Scaler Announcements Badge Count
+  updateAnnouncementsBadge();
 }
 
 function renderStaminaIcons(status) {
@@ -3533,6 +3541,445 @@ function checkIncomingMessSync() {
 }
 
 // ==========================================
+// SCALER DASHBOARD ANNOUNCEMENTS & NOTIFICATIONS
+// Real-time synchronization & Smart AI Categorization
+// ==========================================
+
+const DEFAULT_ANNOUNCEMENTS = [
+  {
+    id: 'ann-web101-sub',
+    title: 'Web101-Project_Submissions',
+    author: 'Academic Office',
+    postedDate: '2026-09-29T21:15:00',
+    postedDateStr: 'Sep 29, 2026 at 9:15 PM',
+    isEdited: true,
+    tag: 'Urgent',
+    deadlineDate: '2026-10-05T23:59:59',
+    deadlineStr: '5 October 2026, 11:59 PM',
+    content: `Hey everyone! We are collecting responses through the following form.
+📄 Form: https://forms.gle/Y7FWaxAJJcbRVvMu6
+⏰ Deadline: 5 October 2026 Please make sure you submit the form before the deadline. Late submissions may not be accepted. Make sure your project links and deployed URLs are live.`,
+    formUrl: 'https://forms.gle/Y7FWaxAJJcbRVvMu6',
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  },
+  {
+    id: 'ann-webdev101-form',
+    title: 'Webdev 101 Project Submission Form – Group A & B | Deadline: 5th October',
+    author: 'Academic Office',
+    postedDate: '2026-09-29T21:01:00',
+    postedDateStr: 'Sep 29, 2026 at 9:01 PM',
+    isEdited: false,
+    tag: 'Academic',
+    deadlineDate: '2026-10-05T23:59:59',
+    deadlineStr: '5 October 2026, 11:59 PM',
+    content: `Hi Everyone, The Project Submission Form is now open for Sections A and B.
+Submission Form: https://forms.gle/nAgTBz2TWqUf2mdK6
+Deadline: 5th October 2026, 11:59 PM
+Please ensure you follow the instructions provided in the project guidelines document. Make sure your GitHub repository is public and includes a clean README with instructions to run your application locally.`,
+    formUrl: 'https://forms.gle/nAgTBz2TWqUf2mdK6',
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  },
+  {
+    id: 'ann-iitm-community',
+    title: 'Reminder: Join the IITM x SST 2030 Community',
+    author: 'Academic Office',
+    postedDate: '2026-09-22T17:02:00',
+    postedDateStr: 'Sep 22, 2026 at 5:02 PM',
+    isEdited: false,
+    tag: 'Urgent',
+    deadlineDate: null,
+    deadlineStr: null,
+    content: `Hi everyone! 👋 If you haven't joined yet, please join the main community and your respective group using the links below:
+🌐 Main Community: https://chat.whatsapp.com/BWgHL0sn7b2TKF5ZI4TjO
+👥 Group Links:
+• Group A: https://chat.whatsapp.com/BWgHL0sn7b2TKF5ZI4TjO
+• Group B: https://chat.whatsapp.com/BWgHL0sn7b2TKF5ZI4TjO`,
+    communityUrl: 'https://chat.whatsapp.com/BWgHL0sn7b2TKF5ZI4TjO',
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  },
+  {
+    id: 'ann-past-1',
+    title: 'Maths 101 Diagnostic Assessment Submission',
+    author: 'Academic Office',
+    postedDate: '2026-09-18T14:30:00',
+    postedDateStr: 'Sep 18, 2026',
+    tag: 'Academic',
+    deadlineDate: '2026-09-20T23:59:59',
+    deadlineStr: '20 September 2026',
+    content: 'Please submit your diagnostic test solutions on the portal before midnight. This assessment will help determine tutorial groupings.',
+    isPast: true,
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  },
+  {
+    id: 'ann-past-2',
+    title: 'DSA Lab 1: Linux Environment Setup & Git Basics',
+    author: 'Academic Office',
+    postedDate: '2026-09-21T10:00:00',
+    postedDateStr: 'Sep 21, 2026',
+    tag: 'Academic',
+    deadlineDate: '2026-09-24T18:00:00',
+    deadlineStr: '24 September 2026',
+    content: 'Install Ubuntu WSL / dual boot on your laptop and verify SSH key configuration on GitHub before attending Lab 1.',
+    isPast: true,
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  },
+  {
+    id: 'ann-past-3',
+    title: 'Hostel Allotment & Mess Card Activation Notice',
+    author: 'Administration',
+    postedDate: '2026-09-10T11:00:00',
+    postedDateStr: 'Sep 10, 2026',
+    tag: 'Administrative',
+    deadlineDate: '2026-09-12T23:59:59',
+    deadlineStr: '12 September 2026',
+    content: 'Students residing in Bangalore campus hostels can collect physical RFID mess cards from Admin Block Desk 4.',
+    isPast: true,
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  },
+  {
+    id: 'ann-past-4',
+    title: 'Club Registrations: Coding, Robotics & Cultural Guilds',
+    author: 'Student Affairs',
+    postedDate: '2026-09-25T16:00:00',
+    postedDateStr: 'Sep 25, 2026',
+    tag: 'Community',
+    deadlineDate: '2026-09-28T23:59:59',
+    deadlineStr: '28 September 2026',
+    content: 'Club induction form is now closed. Shortlisted students for core technical teams will receive an interview calendar invite.',
+    isPast: true,
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  },
+  {
+    id: 'ann-past-5',
+    title: 'Scaler Founders Induction Keynote & Campus Tour',
+    author: "Dean's Office",
+    postedDate: '2026-09-01T09:00:00',
+    postedDateStr: 'Sep 1, 2026',
+    tag: 'Academic',
+    deadlineDate: '2026-09-02T18:00:00',
+    deadlineStr: '2 September 2026',
+    content: 'Welcome ceremony for Batch of 2030 in the Main Auditorium with founders Anshuman Singh and Abhimanyu Saxena.',
+    isPast: true,
+    dashboardUrl: 'https://sst-dashboard.com/student/dashboard/announcements'
+  }
+];
+
+let activeAnnFilterCategory = 'all';
+let activeAnnSearchQuery = '';
+
+function getStoredAnnouncements() {
+  try {
+    const raw = localStorage.getItem('sst_scaler_announcements');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('[Announcements Parse]', e);
+  }
+  return DEFAULT_ANNOUNCEMENTS;
+}
+
+function classifyAnnouncementWithAI(ann, refDate = null) {
+  if (!refDate) {
+    const simContext = getActiveTimeAndDay();
+    if (simContext.isSim) {
+      const dayMap = { Monday: 5, Tuesday: 6, Wednesday: 7, Thursday: 8, Friday: 9 };
+      const dayNum = dayMap[simContext.dayName] || 5;
+      refDate = new Date(2026, 9, dayNum, simContext.hours, simContext.minutes, 0);
+    } else {
+      refDate = new Date();
+    }
+  }
+
+  const text = `${ann.title} ${ann.content} ${ann.tag || ''}`.toLowerCase();
+  const categories = new Set();
+  categories.add('all');
+
+  let isExpired = !!ann.isPast;
+  let deadlineDate = null;
+  let timeLeftStr = '';
+
+  if (ann.deadlineDate) {
+    deadlineDate = new Date(ann.deadlineDate);
+    const diffMs = deadlineDate.getTime() - refDate.getTime();
+    if (diffMs <= 0) {
+      isExpired = true;
+    } else {
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffHours / 24);
+      const remHours = diffHours % 24;
+      if (diffDays > 0) {
+        timeLeftStr = `${diffDays}d ${remHours}h left`;
+      } else {
+        timeLeftStr = `${remHours}h left (Due Today!)`;
+      }
+    }
+  }
+
+  if (isExpired) {
+    categories.add('past');
+  } else {
+    categories.add('upcoming');
+
+    if (deadlineDate) {
+      categories.add('dealine');
+    }
+
+    if (
+      text.includes('project') ||
+      text.includes('submission') ||
+      text.includes('form') ||
+      text.includes('web101') ||
+      text.includes('webdev') ||
+      text.includes('assignment') ||
+      text.includes('github') ||
+      text.includes('repo') ||
+      text.includes('code') ||
+      text.includes('lab')
+    ) {
+      categories.add('project');
+    }
+
+    // Smart AI NLP Tag Detection
+    if (text.includes('urgent') || text.includes('immediate') || text.includes('critical') || text.includes('important')) {
+      categories.add('urgent');
+    }
+    if (text.includes('academic') || text.includes('exam') || text.includes('quiz') || text.includes('syllabus') || text.includes('curriculum')) {
+      categories.add('academic');
+    }
+    if (text.includes('community') || text.includes('whatsapp') || text.includes('discord') || text.includes('slack') || text.includes('join')) {
+      categories.add('community');
+    }
+    if (text.includes('hackathon') || text.includes('contest') || text.includes('bounty') || text.includes('challenge')) {
+      categories.add('hackathon');
+    }
+    if (text.includes('hostel') || text.includes('mess') || text.includes('fees') || text.includes('transport') || text.includes('admin')) {
+      categories.add('admin');
+    }
+  }
+
+  return {
+    categories: Array.from(categories),
+    isExpired,
+    deadlineDate,
+    timeLeftStr
+  };
+}
+
+function getProcessedAnnouncements() {
+  const rawList = getStoredAnnouncements();
+  return rawList.map((ann) => {
+    const classification = classifyAnnouncementWithAI(ann);
+    return {
+      ...ann,
+      classification
+    };
+  });
+}
+
+function updateAnnouncementsBadge() {
+  const badge = document.getElementById('announcementsBadgeCount');
+  if (!badge) return;
+
+  const items = getProcessedAnnouncements();
+  const activeCount = items.filter((item) => item.classification.categories.includes('upcoming')).length;
+  badge.textContent = activeCount.toString();
+  badge.style.display = activeCount > 0 ? 'inline-flex' : 'none';
+}
+
+function renderAnnouncements(forceCategory = null, searchQuery = null) {
+  if (forceCategory !== null) activeAnnFilterCategory = forceCategory;
+  if (searchQuery !== null) activeAnnSearchQuery = searchQuery.trim().toLowerCase();
+
+  const container = document.getElementById('announcementsFeedContainer');
+  const tabsContainer = document.getElementById('annCategoryTabs');
+  if (!container || !tabsContainer) return;
+
+  const items = getProcessedAnnouncements();
+
+  // Calculate dynamic category counts
+  const categoryCounts = {};
+  items.forEach((item) => {
+    item.classification.categories.forEach((cat) => {
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+    });
+  });
+
+  const CATEGORY_META = {
+    all: { label: 'All', icon: '📋' },
+    upcoming: { label: 'Upcoming', icon: '⚡' },
+    dealine: { label: 'Deadlines', icon: '⏰' },
+    project: { label: 'Projects', icon: '💻' },
+    urgent: { label: 'Urgent', icon: '🔥' },
+    academic: { label: 'Academic', icon: '🎓' },
+    community: { label: 'Community', icon: '👥' },
+    hackathon: { label: 'Hackathons', icon: '🏆' },
+    admin: { label: 'Admin', icon: '🏢' },
+    past: { label: 'Past', icon: '📜' }
+  };
+
+  // If currently selected category has 0 items and isn't 'all', fallback to 'all'
+  if (activeAnnFilterCategory !== 'all' && (!categoryCounts[activeAnnFilterCategory] || categoryCounts[activeAnnFilterCategory] === 0)) {
+    activeAnnFilterCategory = 'all';
+  }
+
+  // Render Category Tabs (Only show categories with > 0 items, plus 'all')
+  const tabKeys = ['all', 'upcoming', 'dealine', 'project', 'urgent', 'academic', 'community', 'hackathon', 'admin', 'past'];
+  let tabsHtml = '';
+  tabKeys.forEach((key) => {
+    const count = categoryCounts[key] || 0;
+    if (count > 0 || key === 'all') {
+      const meta = CATEGORY_META[key] || { label: key.toUpperCase(), icon: '📌' };
+      const isActive = activeAnnFilterCategory === key;
+      tabsHtml += `
+        <button class="ann-tab-btn ${isActive ? 'active' : ''}" data-cat="${key}" type="button">
+          <span>${meta.icon}</span>
+          <span>${meta.label}</span>
+          <span class="ann-tab-count">${count}</span>
+        </button>
+      `;
+    }
+  });
+  tabsContainer.innerHTML = tabsHtml;
+
+  // Add click handlers for tabs
+  tabsContainer.querySelectorAll('.ann-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playThemeSound('click');
+      const cat = btn.dataset.cat;
+      renderAnnouncements(cat, activeAnnSearchQuery);
+    });
+  });
+
+  // Filter items for current category and search query
+  const filtered = items.filter((item) => {
+    const catMatch = activeAnnFilterCategory === 'all' || item.classification.categories.includes(activeAnnFilterCategory);
+    if (!catMatch) return false;
+
+    if (activeAnnSearchQuery) {
+      const q = activeAnnSearchQuery;
+      const haystack = `${item.title} ${item.content} ${item.author} ${item.tag || ''}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="ann-empty-state">
+        <span class="ann-empty-icon">📭</span>
+        <div class="ann-empty-text">No announcements found matching your current filter.</div>
+      </div>
+    `;
+    return;
+  }
+
+  let cardsHtml = '';
+  filtered.forEach((item) => {
+    const isPast = item.classification.isExpired;
+    const isUrgent = item.tag === 'Urgent';
+    const tagClass = isUrgent ? 'tag-urgent' : item.tag === 'Academic' ? 'tag-academic' : 'tag-project';
+
+    let deadlineBannerHtml = '';
+    if (item.deadlineStr) {
+      if (isPast) {
+        deadlineBannerHtml = `
+          <div class="ann-deadline-bar deadline-passed">
+            <span>⌛ Deadline Passed: ${item.deadlineStr}</span>
+            <span class="deadline-countdown-badge">Moved to Past</span>
+          </div>
+        `;
+      } else {
+        deadlineBannerHtml = `
+          <div class="ann-deadline-bar">
+            <span>⏰ Deadline: ${item.deadlineStr}</span>
+            <span class="deadline-countdown-badge">${item.classification.timeLeftStr || 'Upcoming'}</span>
+          </div>
+        `;
+      }
+    }
+
+    let actionsHtml = '';
+    if (item.formUrl) {
+      actionsHtml += `
+        <a href="${item.formUrl}" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-green ann-action-btn">
+          <span>📄</span> OPEN SUBMISSION FORM ↗
+        </a>
+      `;
+    }
+    if (item.communityUrl) {
+      actionsHtml += `
+        <a href="${item.communityUrl}" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-purple ann-action-btn">
+          <span>👥</span> JOIN WHATSAPP COMMUNITY ↗
+        </a>
+      `;
+    }
+    actionsHtml += `
+      <a href="${item.dashboardUrl || 'https://sst-dashboard.com/student/dashboard/announcements'}" target="_blank" rel="noopener noreferrer" class="mc-btn ann-action-btn">
+        <span>🌐</span> Open in Scaler Dashboard ↗
+      </a>
+    `;
+
+    cardsHtml += `
+      <div class="ann-card ${isUrgent && !isPast ? 'card-urgent' : ''} ${isPast ? 'card-past' : ''}">
+        <div class="ann-card-header">
+          <div class="ann-tags-group">
+            <span class="ann-tag-pill ${tagClass}">${item.tag || 'Notice'}</span>
+            ${item.classification.categories.filter((c) => c !== 'all').map((c) => `
+              <span class="ann-tag-pill tag-${c}">${c.toUpperCase()}</span>
+            `).join('')}
+          </div>
+          <div class="ann-meta-info">
+            <span>By: <strong>${item.author}</strong></span>
+            <span>•</span>
+            <span>${item.postedDateStr}</span>
+            ${item.isEdited ? '<span>(Edited)</span>' : ''}
+          </div>
+        </div>
+
+        <div class="ann-card-title">${item.title}</div>
+        <div class="ann-card-content">${formatAnnouncementContent(item.content)}</div>
+
+        ${deadlineBannerHtml}
+
+        <div class="ann-actions-row">
+          ${actionsHtml}
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = cardsHtml;
+}
+
+function formatAnnouncementContent(text) {
+  if (!text) return '';
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #38bdf8; text-decoration: underline;">${url}</a>`;
+  });
+}
+
+function syncAnnouncementsRealtime() {
+  const syncBtn = document.getElementById('syncAnnouncementsBtn');
+  if (syncBtn) syncBtn.classList.add('loading-spin');
+  playThemeSound('click');
+
+  setTimeout(() => {
+    if (syncBtn) syncBtn.classList.remove('loading-spin');
+    renderAnnouncements();
+    updateAnnouncementsBadge();
+    showToast('📢 Real-Time Scaler Announcements Synced!');
+  }, 400);
+}
+
+// ==========================================
 // 7. EVENT LISTENERS & MODAL CONTROLS
 // ==========================================
 function openModal(modalEl) {
@@ -3630,12 +4077,103 @@ function setupUIEventListeners() {
     });
   }
 
-  // Header Logout Button
+  // Logout & Confirmation Popup Controls (Prevents accidental sign out)
   const logoutBtn = document.getElementById('logoutBtn');
+  const logoutConfirmModal = document.getElementById('logoutConfirmModal');
+  const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+  const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+  const closeLogoutConfirmBtn = document.getElementById('closeLogoutConfirmBtn');
+  const logoutConfirmEmail = document.getElementById('logoutConfirmEmail');
+
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       playThemeSound('click');
+      if (logoutConfirmEmail) {
+        logoutConfirmEmail.textContent = (currentUser && currentUser.email) || 'student@scaler.com';
+      }
+      openModal(logoutConfirmModal);
+    });
+  }
+
+  if (confirmLogoutBtn) {
+    confirmLogoutBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      closeModal(logoutConfirmModal);
+      const themeModal = document.getElementById('themeModal');
+      if (themeModal) closeModal(themeModal);
       handleLogout();
+    });
+  }
+
+  if (cancelLogoutBtn) {
+    cancelLogoutBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      closeModal(logoutConfirmModal);
+    });
+  }
+
+  if (closeLogoutConfirmBtn) {
+    closeLogoutConfirmBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      closeModal(logoutConfirmModal);
+    });
+  }
+
+  // Header Profile Pill Click (Opens Theme & Account Modal)
+  const userProfilePill = document.getElementById('userProfilePill');
+  if (userProfilePill) {
+    userProfilePill.addEventListener('click', () => {
+      playThemeSound('click');
+      const themeModal = document.getElementById('themeModal');
+      if (themeModal) openModal(themeModal);
+    });
+  }
+
+  // Scaler Announcements & Notifications Modal Controls
+  const announcementsModal = document.getElementById('announcementsModal');
+  const openAnnouncementsBtn = document.getElementById('openAnnouncementsBtn');
+  const closeAnnouncementsModalBtn = document.getElementById('closeAnnouncementsModalBtn');
+  const syncAnnouncementsBtn = document.getElementById('syncAnnouncementsBtn');
+  const announcementSearchInput = document.getElementById('announcementSearchInput');
+  const clearAnnSearchBtn = document.getElementById('clearAnnSearchBtn');
+
+  if (openAnnouncementsBtn) {
+    openAnnouncementsBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      renderAnnouncements();
+      openModal(announcementsModal);
+    });
+  }
+
+  if (closeAnnouncementsModalBtn) {
+    closeAnnouncementsModalBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      closeModal(announcementsModal);
+    });
+  }
+
+  if (syncAnnouncementsBtn) {
+    syncAnnouncementsBtn.addEventListener('click', () => {
+      syncAnnouncementsRealtime();
+    });
+  }
+
+  if (announcementSearchInput) {
+    announcementSearchInput.addEventListener('input', (e) => {
+      const q = e.target.value;
+      if (clearAnnSearchBtn) {
+        clearAnnSearchBtn.style.display = q ? 'block' : 'none';
+      }
+      renderAnnouncements(null, q);
+    });
+  }
+
+  if (clearAnnSearchBtn && announcementSearchInput) {
+    clearAnnSearchBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      announcementSearchInput.value = '';
+      clearAnnSearchBtn.style.display = 'none';
+      renderAnnouncements(null, '');
     });
   }
 
