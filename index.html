@@ -744,7 +744,7 @@
               <span>YOUR VENDOR THIS MONTH: <strong>The Chef Talk - All Meals</strong></span>
             </div>
             <div class="mess-refresh-countdown-pill" id="messRefreshPill">
-              <span>🔄</span> <span id="messCountdownSeconds">30</span>s
+              <span>🔄</span> <span id="messCountdownSecondsPill">30</span>s
             </div>
           </div>
 
@@ -753,22 +753,23 @@
             <div class="mess-timer-bar-fill" id="messTimerBarFill" style="width: 100%;"></div>
           </div>
 
-          <!-- QR Code Canvas & Visual Frame -->
+          <!-- QR Code Canvas & Visual Frame (Pixel-Perfect Clean White Card) -->
           <div class="mess-qr-frame">
-            <div class="qr-glow-pulse" id="qrGlowPulse"></div>
             <div class="mess-qr-canvas-wrap" id="messQrCanvasWrap">
-              <canvas id="messQrCanvas" width="220" height="220" style="display: none;"></canvas>
+              <canvas id="messQrCanvas" width="210" height="210" style="display: none;"></canvas>
               <img id="messQrImg" class="mess-qr-img" src="" alt="SST Student Meal QR Code" />
             </div>
-            <div class="qr-scan-line" id="qrScanLine"></div>
+            <div class="qr-valid-countdown" id="qrValidCountdown">
+              Valid for <span id="messCountdownSeconds">30</span>s
+            </div>
           </div>
 
           <!-- Student & Security Metadata -->
           <div class="mess-student-meta">
             <div class="student-name-row" id="messStudentNameRow">Manish (26BCS10031)</div>
             <div class="student-email-row" id="messStudentEmailRow">manish.26bcs10031@sst.scaler.com</div>
-            <div class="qr-token-hash" id="messTokenHash">TOKEN: SST-MESS-26BCS10031-LUNCH-9A8F3C</div>
-            <div class="qr-instruction-text">Show this dynamic QR to the mess vendor to collect your food</div>
+            <div class="qr-token-hash" id="messTokenHash" title="Click to copy token">TOKEN: SST-MESS-26BCS10031-LUNCH-9A8F3C</div>
+            <div class="qr-instruction-text">Show this dynamic QR to the mess vendor to collect food</div>
           </div>
 
           <div class="mess-qr-actions">

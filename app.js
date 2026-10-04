@@ -3315,8 +3315,8 @@ function renderMealQrMatrix(payload) {
     if (typeof QRCode !== 'undefined') {
       qrcodeInstance = new QRCode(wrap, {
         text: payload,
-        width: 220,
-        height: 220,
+        width: 210,
+        height: 210,
         colorDark: '#000000',
         colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
@@ -3325,21 +3325,21 @@ function renderMealQrMatrix(payload) {
         const img = wrap.querySelector('img');
         const cvs = wrap.querySelector('canvas');
         if (img) {
-          img.style.width = '220px';
-          img.style.height = '220px';
-          img.style.minWidth = '220px';
-          img.style.minHeight = '220px';
-          img.style.maxWidth = '220px';
-          img.style.maxHeight = '220px';
+          img.style.width = '210px';
+          img.style.height = '210px';
+          img.style.minWidth = '210px';
+          img.style.minHeight = '210px';
+          img.style.maxWidth = '210px';
+          img.style.maxHeight = '210px';
           img.style.display = 'block';
           img.style.margin = '0 auto';
           img.classList.add('mess-qr-img');
         }
         if (cvs) {
-          cvs.style.width = '220px';
-          cvs.style.height = '220px';
-          cvs.style.minWidth = '220px';
-          cvs.style.minHeight = '220px';
+          cvs.style.width = '210px';
+          cvs.style.height = '210px';
+          cvs.style.minWidth = '210px';
+          cvs.style.minHeight = '210px';
           cvs.style.margin = '0 auto';
         }
       };
@@ -3535,10 +3535,12 @@ function openConnectedScalerTab() {
 
 function syncMessCountdown(secondsLeft = 30) {
   const countdownSecEl = document.getElementById('messCountdownSeconds');
+  const countdownPillEl = document.getElementById('messCountdownSecondsPill');
   const timerBadgeEl = document.getElementById('messTimerBadge');
   const timerBarFill = document.getElementById('messTimerBarFill');
 
   if (countdownSecEl) countdownSecEl.textContent = secondsLeft;
+  if (countdownPillEl) countdownPillEl.textContent = secondsLeft;
   if (timerBadgeEl) timerBadgeEl.textContent = `Refreshes in ${secondsLeft}s ⏳`;
   if (timerBarFill) {
     const pct = Math.max(2, (secondsLeft / 30) * 100);
@@ -3585,7 +3587,7 @@ function applyRealLiveSyncedToken(token, secondsLeft = 30, qrDataUrl = '') {
   if (qrDataUrl) {
     const wrap = document.getElementById('messQrCanvasWrap');
     if (wrap) {
-      wrap.innerHTML = `<img src="${qrDataUrl}" alt="Real Scaler Mess QR" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:8px;" />`;
+      wrap.innerHTML = `<img src="${qrDataUrl}" alt="Real Scaler Mess QR" style="width:210px;height:210px;display:block;margin:0 auto;border-radius:6px;object-fit:contain;" />`;
     }
   } else if (token) {
     renderMealQrMatrix(token);

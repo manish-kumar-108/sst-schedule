@@ -3725,19 +3725,21 @@ body[data-theme="pink"] .mess-hud-sub {
 
 /* Mess Modal Box */
 .mess-modal-box {
-  max-width: 620px !important;
-  width: 95% !important;
+  max-width: 580px !important;
+  width: 94% !important;
+  max-height: 90vh !important;
 }
 
 /* Status Banner */
 .mess-status-banner {
-  background: rgba(0, 0, 0, 0.3);
+  flex: 0 0 auto !important;
+  background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 body[data-theme="minecraft"] .mess-status-banner {
   border: 2px solid #000;
@@ -3805,17 +3807,22 @@ body[data-theme="pink"] .mess-window-text {
 }
 
 /* Meal QR Card */
+/* Meal QR Card */
 .mess-qr-card {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex: 0 0 auto !important; /* CRITICAL: Never shrink or compress */
+  width: 100% !important;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px 16px 18px 16px;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
   text-align: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible !important; /* Never clip QR or metadata */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 body[data-theme="minecraft"] .mess-qr-card {
   border: 3px solid #000;
@@ -3842,7 +3849,7 @@ body[data-theme="pink"] .mess-qr-card {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .mess-vendor-chip {
   font-size: 11px;
@@ -3882,11 +3889,11 @@ body[data-theme="pink"] .mess-refresh-countdown-pill {
 /* 30-Second Refresh Progress Bar */
 .mess-timer-bar-wrap {
   width: 100%;
-  height: 6px;
+  height: 4px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
   overflow: hidden;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 body[data-theme="pink"] .mess-timer-bar-wrap {
   background: #fce7f3;
@@ -3900,25 +3907,27 @@ body[data-theme="pink"] .mess-timer-bar-fill {
   background: linear-gradient(90deg, #f472b6, #fb7185);
 }
 
-/* QR Code Frame with Scanner Animation */
+/* QR Code Frame - Pixel-Perfect White Card matching Scaler Dashboard */
 .mess-qr-frame {
-  width: 250px;
-  height: 250px;
-  min-width: 250px;
-  min-height: 250px;
-  max-width: 250px;
-  max-height: 250px;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 240px;
+  max-width: 280px;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
   position: relative;
-  background: #ffffff;
-  padding: 14px;
-  border-radius: 16px;
-  border: 4px solid #1e293b;
+  background: #ffffff !important;
+  padding: 16px 16px 12px 16px;
+  border-radius: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
   display: flex !important;
+  flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
-  margin: 14px auto 18px auto;
-  overflow: hidden;
+  margin: 6px auto 14px auto;
+  overflow: visible !important;
   box-sizing: border-box;
 }
 body[data-theme="minecraft"] .mess-qr-frame {
@@ -3927,7 +3936,7 @@ body[data-theme="minecraft"] .mess-qr-frame {
   box-shadow: inset -2px -2px #cbd5e1, inset 2px 2px #ffffff, 0 6px 0 rgba(0,0,0,0.5);
 }
 body[data-theme="minimal"] .mess-qr-frame {
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
@@ -3939,69 +3948,71 @@ body[data-theme="pink"] .mess-qr-frame {
 }
 
 .mess-qr-canvas-wrap {
-  width: 220px;
-  height: 220px;
-  min-width: 220px;
-  min-height: 220px;
-  max-width: 220px;
-  max-height: 220px;
+  width: 210px !important;
+  height: 210px !important;
+  min-width: 210px !important;
+  min-height: 210px !important;
+  max-width: 210px !important;
+  max-height: 210px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   position: relative;
   overflow: hidden;
   margin: 0 auto;
+  background: #ffffff !important;
 }
 
-/* Force BOTH canvas and img inside canvas-wrap to be exact 220x220 square */
+/* Force BOTH canvas and img inside canvas-wrap to be exact 210x210 square */
 .mess-qr-canvas-wrap canvas,
 .mess-qr-canvas-wrap img,
 .mess-qr-img {
-  width: 220px !important;
-  height: 220px !important;
-  min-width: 220px !important;
-  min-height: 220px !important;
-  max-width: 220px !important;
-  max-height: 220px !important;
+  width: 210px !important;
+  height: 210px !important;
+  min-width: 210px !important;
+  min-height: 210px !important;
+  max-width: 210px !important;
+  max-height: 210px !important;
   display: block !important;
   image-rendering: pixelated !important;
   object-fit: contain !important;
   margin: 0 auto !important;
 }
 
-/* Laser Scan-line */
+/* Countdown label directly inside/under the white QR card like Scaler */
+.qr-valid-countdown {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  letter-spacing: -0.01em;
+}
+.qr-valid-countdown span {
+  color: #0284c7;
+  font-weight: 800;
+}
+
+/* Remove obstructive laser scan-line */
 .qr-scan-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #22c55e, #38bdf8, transparent);
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
-  animation: qr-laser 2.2s ease-in-out infinite alternate;
-  pointer-events: none;
-  z-index: 5;
-}
-body[data-theme="pink"] .qr-scan-line {
-  background: linear-gradient(90deg, transparent, #ec4899, #f43f5e, transparent);
-  box-shadow: 0 0 10px rgba(236, 72, 153, 0.9);
-}
-@keyframes qr-laser {
-  0% { top: 14px; }
-  100% { top: calc(100% - 18px); }
+  display: none !important;
 }
 
 /* Student & Security Metadata */
 .mess-student-meta {
+  flex: 0 0 auto !important;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  margin-bottom: 18px;
+  gap: 4px;
+  margin-bottom: 14px;
   width: 100%;
 }
 .student-name-row {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.02em;
@@ -4009,7 +4020,7 @@ body[data-theme="pink"] .qr-scan-line {
 body[data-theme="pink"] .student-name-row {
   color: #831843;
   font-family: 'Fredoka', 'Quicksand', cursive, sans-serif;
-  font-size: 18px;
+  font-size: 17px;
 }
 body[data-theme="minimal"] .student-name-row {
   color: #f8fafc;
@@ -4026,15 +4037,16 @@ body[data-theme="pink"] .student-email-row {
 .qr-token-hash {
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 10px;
-  letter-spacing: 0.05em;
-  background: rgba(0, 0, 0, 0.4);
-  padding: 6px 14px;
+  letter-spacing: 0.04em;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 5px 12px;
   border-radius: 8px;
   color: #38bdf8;
-  margin-top: 6px;
-  max-width: 90%;
+  margin-top: 4px;
+  max-width: 95%;
   word-break: break-all;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
 }
 body[data-theme="pink"] .qr-token-hash {
   background: #fdf2f8;
@@ -4042,8 +4054,8 @@ body[data-theme="pink"] .qr-token-hash {
   border: 1px solid #fbcfe8;
 }
 .qr-instruction-text {
-  font-size: 10px;
-  color: #64748b;
+  font-size: 11px;
+  color: #94a3b8;
   margin-top: 4px;
 }
 body[data-theme="pink"] .qr-instruction-text {
@@ -4051,8 +4063,9 @@ body[data-theme="pink"] .qr-instruction-text {
 }
 
 .mess-qr-actions {
+  flex: 0 0 auto !important;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
   width: 100%;
@@ -4128,10 +4141,12 @@ body[data-theme="pink"] .mess-closed-inner {
 
 /* Schedule Grid: EXACTLY 3 MEALS (Breakfast, Lunch, Dinner) */
 .mess-schedule-grid {
+  flex: 0 0 auto !important;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 12px;
+  width: 100%;
 }
 @media (max-width: 680px) {
   .mess-schedule-grid {
