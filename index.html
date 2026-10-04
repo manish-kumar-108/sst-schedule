@@ -815,12 +815,23 @@
           <div class="mess-closed-inner">
             <div class="closed-info-icon">ℹ️</div>
             <div class="closed-title">Wrong meal time.</div>
-            <div class="closed-desc">No QR is available right now.</div>
+            <div class="closed-desc">No QR is available right now on nominal schedule.</div>
             <div class="closed-countdown" id="closedCountdownText">Next meal: Breakfast starts at 07:30 AM</div>
-            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px;">
-              <a href="https://mess.sst-dashboard.com/student/dashboard" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue">
+            
+            <div class="closed-actions-group" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px;">
+              <button class="mc-btn mc-btn-green" id="forceMealPassBtn" type="button" title="Bypass nominal timing if mess vendor has already started serving">
+                <span>⚡</span> VENDOR SERVING EARLY? SHOW QR NOW
+              </button>
+              <a href="https://mess.sst-dashboard.com/student/dashboard" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue" id="closedOpenDashboardBtn">
                 <span>🌐</span> OPEN DASHBOARD ↗
               </a>
+              <button class="mc-btn mc-btn-gold" id="closedSyncWithScalerBtn" type="button" title="Connect directly with open Scaler tab for simultaneous real-time sync">
+                <span>🔄</span> SYNC LIVE SCALER TAB
+              </button>
+            </div>
+
+            <div class="closed-early-note" style="margin-top: 12px; font-size: 11px; color: #94a3b8; line-height: 1.4;">
+              💡 <em>Mess vendors at Scaler often open 30–45m early. If food is ready, click <strong>SHOW QR NOW</strong> to unlock your pass immediately!</em>
             </div>
           </div>
         </div>

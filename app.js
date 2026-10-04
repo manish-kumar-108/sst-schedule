@@ -3041,11 +3041,11 @@ let qrcodeInstance = null;
 
 // Dynamic Lunch calculation:
 // Scaler only gives 3 meals:
-// 1. Breakfast: 7:30 AM to 9:30 AM (fixed everyday)
+// 1. Breakfast: 7:30 AM to 9:30 AM (Vendor early service starts at 06:45 AM)
 // 2. Lunch:
-//    - On academic class days (Mon-Fri with classes): dynamically fetched from Google Sheet schedule (scheduleData[currentGroup][dayName])
-//    - On holidays or weekends: timing is strictly 12:30 PM to 2:30 PM
-// 3. Dinner: 7:30 PM to 9:30 PM (fixed everyday)
+//    - On academic class days: dynamically fetched from Google Sheet schedule (with 45m early buffer)
+//    - On holidays or weekends: timing is 12:30 PM to 2:30 PM (Vendor early service starts at 11:45 AM)
+// 3. Dinner: 7:30 PM to 9:30 PM (Vendor early service starts at 06:30 PM)
 function getLunchWindowForDay(dayName) {
   const isWeekend = (dayName === 'Saturday' || dayName === 'Sunday');
   const groupSched = (typeof scheduleData !== 'undefined' && scheduleData && scheduleData[currentGroup])
@@ -3055,11 +3055,12 @@ function getLunchWindowForDay(dayName) {
   const todayClasses = groupSched[dayName] || [];
   const isHoliday = (!isWeekend && todayClasses.length === 0);
 
-  // If weekend or holiday, lunch timing is strictly 12:30 PM to 02:30 PM
+  // If weekend or holiday, lunch timing is 12:30 PM to 02:30 PM, but vendor early service starts at 11:45 AM
   if (isWeekend || isHoliday) {
     return {
-      startMins: 750, // 12:30 PM
-      endMins: 870,   // 02:30 PM
+      startMins: 705, // 11:45 AM (Early vendor window)
+      nominalStartMins: 750, // 12:30 PM
+      endMins: 900,   // 03:00 PM (Serving grace window)
       timeStr: '12:30 PM – 02:30 PM',
       source: isWeekend ? 'Weekend Schedule' : 'Holiday Schedule'
     };
@@ -3076,8 +3077,9 @@ function getLunchWindowForDay(dayName) {
     const formattedStart = lunchSlot.startTimeFormatted || formatMinutesToTime(lunchSlot.startMinutes);
     const formattedEnd = lunchSlot.endTimeFormatted || formatMinutesToTime(lunchSlot.endMinutes);
     return {
-      startMins: lunchSlot.startMinutes,
-      endMins: lunchSlot.endMinutes,
+      startMins: Math.max(0, lunchSlot.startMinutes - 45), // 45m early vendor service window
+      nominalStartMins: lunchSlot.startMinutes,
+      endMins: lunchSlot.endMinutes + 30,
       timeStr: `${formattedStart} – ${formattedEnd}`,
       source: 'Google Sheet Schedule'
     };
@@ -3085,8 +3087,9 @@ function getLunchWindowForDay(dayName) {
 
   // Fallback default on academic day if not explicitly marked
   return {
-    startMins: 750,
-    endMins: 870,
+    startMins: 705,
+    nominalStartMins: 750,
+    endMins: 900,
     timeStr: '12:30 PM – 02:30 PM',
     source: 'Campus Timing'
   };
@@ -3099,8 +3102,9 @@ function getMessMealWindows(dayName) {
       id: 'breakfast',
       name: 'Breakfast',
       icon: '🌅',
-      startMins: 450, // 07:30 AM
-      endMins: 570,   // 09:30 AM
+      startMins: 405, // 06:45 AM (Vendor opens early on campus!)
+      nominalStartMins: 450, // 07:30 AM
+      endMins: 600,   // 10:00 AM
       timeStr: '07:30 AM – 09:30 AM',
       source: 'Fixed Routine'
     },
@@ -3109,6 +3113,7 @@ function getMessMealWindows(dayName) {
       name: 'Lunch',
       icon: '🍱',
       startMins: lunch.startMins,
+      nominalStartMins: lunch.nominalStartMins,
       endMins: lunch.endMins,
       timeStr: lunch.timeStr,
       source: lunch.source
@@ -3117,8 +3122,9 @@ function getMessMealWindows(dayName) {
       id: 'dinner',
       name: 'Dinner',
       icon: '🍛',
-      startMins: 1170, // 07:30 PM
-      endMins: 1290,   // 09:30 PM
+      startMins: 1110, // 06:30 PM (Vendor opens early on campus!)
+      nominalStartMins: 1170, // 07:30 PM
+      endMins: 1320,   // 10:00 PM
       timeStr: '07:30 PM – 09:30 PM',
       source: 'Fixed Routine'
     }
@@ -3129,29 +3135,60 @@ function getMessMealStatus() {
   const { totalMinutes, dayName } = getActiveTimeAndDay();
   const mealWindows = getMessMealWindows(dayName);
 
-  // Check if currently inside any meal window
-  const activeMeal = mealWindows.find(m => totalMinutes >= m.startMins && totalMinutes < m.endMins);
+  // 1. Check if user or vendor activated early service override
+  const earlyOverrideUntil = parseInt(localStorage.getItem('sst_early_meal_override_until') || '0', 10);
+  const isEarlyOverrideActive = Date.now() < earlyOverrideUntil;
 
-  if (activeMeal) {
-    const minsLeft = activeMeal.endMins - totalMinutes;
-    return {
-      isOpen: true,
-      meal: activeMeal,
-      statusText: `Serving ${activeMeal.name} (${activeMeal.timeStr})`,
-      countdownText: `Ends in ${minsLeft}m`,
-      minsLeft
-    };
-  }
+  // 2. Check if a real Scaler Dashboard QR was synced in the last 45 minutes
+  const realTokenTs = parseInt(localStorage.getItem('sst_real_meal_ts') || '0', 10);
+  const isLiveTokenActive = !!realSyncedMealToken && (Date.now() - realTokenTs < 45 * 60 * 1000);
 
-  // Find next upcoming meal today
-  let nextMeal = mealWindows.find(m => m.startMins > totalMinutes);
+  // Determine active meal if currently inside any meal window (including early vendor window)
+  let activeMeal = mealWindows.find(m => totalMinutes >= m.startMins && totalMinutes < m.endMins);
+
+  // Find next upcoming meal today or tomorrow
+  let nextMeal = mealWindows.find(m => m.nominalStartMins > totalMinutes);
   let minsUntilNext = 0;
   if (nextMeal) {
-    minsUntilNext = nextMeal.startMins - totalMinutes;
+    minsUntilNext = nextMeal.nominalStartMins - totalMinutes;
   } else {
-    // Tomorrow morning Breakfast at 7:30 AM
     nextMeal = mealWindows[0];
-    minsUntilNext = (24 * 60 - totalMinutes) + nextMeal.startMins;
+    minsUntilNext = (24 * 60 - totalMinutes) + nextMeal.nominalStartMins;
+  }
+
+  // Pre-meal buffer: if within 45 minutes of ANY meal (e.g. 7:11 AM is 19 mins before 7:30 AM!)
+  const isWithinEarlyBuffer = (minsUntilNext > 0 && minsUntilNext <= 45);
+
+  if (activeMeal || isEarlyOverrideActive || isLiveTokenActive || isWithinEarlyBuffer) {
+    const meal = activeMeal || nextMeal;
+    const isEarly = totalMinutes < meal.nominalStartMins;
+    const minsLeft = Math.max(1, meal.endMins - totalMinutes);
+
+    let statusText = `Serving ${meal.name} (${meal.timeStr})`;
+    let badgeText = `🟢 ${meal.name.toUpperCase()} SERVICE ACTIVE`;
+    let subInfo = `${meal.timeStr} • The Chef Talk`;
+
+    if (isEarly || isWithinEarlyBuffer) {
+      statusText = `Serving ${meal.name} (Early Vendor Service Active)`;
+      badgeText = `🟢 ${meal.name.toUpperCase()} • EARLY VENDOR ACTIVE`;
+      subInfo = `Vendor serving early (${minsUntilNext}m before nominal start) • The Chef Talk`;
+    }
+    if (isLiveTokenActive) {
+      badgeText = `🟢 ${meal.name.toUpperCase()} • LIVE SCALER SYNC ACTIVE`;
+      subInfo = `Simultaneous sync with mess.sst-dashboard.com • The Chef Talk`;
+    }
+
+    return {
+      isOpen: true,
+      meal,
+      isEarly: isEarly || isWithinEarlyBuffer,
+      isLiveTokenActive,
+      statusText,
+      badgeText,
+      subInfo,
+      countdownText: `Service ends in ${minsLeft}m`,
+      minsLeft
+    };
   }
 
   const hLeft = Math.floor(minsUntilNext / 60);
@@ -3185,7 +3222,7 @@ function updateLiveMessHud() {
 
   if (status.isOpen) {
     if (titleEl) titleEl.textContent = `SST MESS: ${status.meal.name.toUpperCase()} ACTIVE`;
-    if (subEl) subEl.textContent = `${status.meal.timeStr} • The Chef Talk`;
+    if (subEl) subEl.textContent = status.subInfo || `${status.meal.timeStr} • The Chef Talk`;
     if (iconEl) iconEl.textContent = status.meal.icon || '🍱';
     if (openBtn) openBtn.innerHTML = '<span>⚡</span> MEAL QR ACTIVE';
   } else {
@@ -3222,10 +3259,10 @@ function renderMessModal() {
     if (banner) banner.style.display = 'flex';
     if (activeBadge) {
       activeBadge.className = 'mess-active-badge badge-open';
-      activeBadge.textContent = `🟢 ${status.meal.name.toUpperCase()} SERVICE ACTIVE`;
+      activeBadge.textContent = status.badgeText || `🟢 ${status.meal.name.toUpperCase()} SERVICE ACTIVE`;
     }
     if (windowText) {
-      windowText.innerHTML = `Serving: <strong>${status.meal.name} (${status.meal.timeStr})</strong> • ${status.meal.source}`;
+      windowText.innerHTML = `Serving: <strong>${status.meal.name} (${status.meal.timeStr})</strong> • ${status.subInfo || status.meal.source}`;
     }
     if (activeCard) activeCard.style.display = 'flex';
     if (closedCard) closedCard.style.display = 'none';
@@ -3257,7 +3294,7 @@ function renderMessModal() {
 
     if (isThisActive) {
       slotEl.className = 'mess-slot-card active-slot';
-      pillEl.textContent = 'Active Now 🟢';
+      pillEl.textContent = status.isEarly ? 'Early Active 🟢' : 'Active Now 🟢';
     } else if (isPast) {
       slotEl.className = 'mess-slot-card';
       pillEl.textContent = 'Ended';
@@ -3482,9 +3519,21 @@ function renderOfflineQrCanvas(payload) {
   }
 }
 
-function tickMessQrTimer() {
-  const secondsLeft = 30 - (Math.floor(Date.now() / 1000) % 30);
+let lastLiveSyncedTickTime = 0;
+let lastLiveSyncedSecondsLeft = 30;
+let connectedScalerWindow = null;
+
+function openConnectedScalerTab() {
+  playThemeSound('click');
+  // Open Scaler Mess Dashboard with a named window so window.opener is linked
+  connectedScalerWindow = window.open('https://mess.sst-dashboard.com/student/dashboard', 'sst_scaler_mess_window');
+  showToast('🌐 Connected Scaler Tab opened! Use 1-Click Sync to link QR live.');
   
+  const messSyncBox = document.getElementById('messSyncBox');
+  if (messSyncBox) messSyncBox.style.display = 'block';
+}
+
+function syncMessCountdown(secondsLeft = 30) {
   const countdownSecEl = document.getElementById('messCountdownSeconds');
   const timerBadgeEl = document.getElementById('messTimerBadge');
   const timerBarFill = document.getElementById('messTimerBarFill');
@@ -3495,6 +3544,88 @@ function tickMessQrTimer() {
     const pct = Math.max(2, (secondsLeft / 30) * 100);
     timerBarFill.style.width = `${pct}%`;
   }
+}
+
+function applyRealLiveSyncedToken(token, secondsLeft = 30, qrDataUrl = '') {
+  if (!token && !qrDataUrl) return;
+
+  // Extend early override so it stays active during live service
+  localStorage.setItem('sst_early_meal_override_until', Date.now() + 2 * 3600 * 1000);
+
+  if (token) {
+    realSyncedMealToken = token;
+    currentMealToken = token;
+    currentMealTokenType = 'Live Scaler Dashboard QR';
+    localStorage.setItem('sst_real_meal_token', token);
+    localStorage.setItem('sst_real_meal_ts', Date.now());
+  }
+
+  lastLiveSyncedTickTime = Date.now();
+  lastLiveSyncedSecondsLeft = secondsLeft;
+
+  // Ensure active card is visible and closed card is hidden
+  const activeCard = document.getElementById('messQrActiveCard');
+  const closedCard = document.getElementById('messClosedCard');
+  const banner = document.getElementById('messStatusBanner');
+  const activeBadge = document.getElementById('messActiveBadge');
+  const windowText = document.getElementById('messWindowText');
+
+  if (activeCard) activeCard.style.display = 'flex';
+  if (closedCard) closedCard.style.display = 'none';
+  if (banner) banner.style.display = 'flex';
+  if (activeBadge) {
+    activeBadge.className = 'mess-active-badge badge-open';
+    activeBadge.textContent = '🟢 LIVE SCALER SYNC ACTIVE';
+  }
+  if (windowText) {
+    windowText.innerHTML = 'Live Bridge: <strong>mess.sst-dashboard.com</strong> • Simultaneous 30s Refresh';
+  }
+
+  // Render QR image or matrix
+  if (qrDataUrl) {
+    const wrap = document.getElementById('messQrCanvasWrap');
+    if (wrap) {
+      wrap.innerHTML = `<img src="${qrDataUrl}" alt="Real Scaler Mess QR" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:8px;" />`;
+    }
+  } else if (token) {
+    renderMealQrMatrix(token);
+  }
+
+  syncMessCountdown(secondsLeft);
+
+  const tokenHashEl = document.getElementById('messTokenHash');
+  if (tokenHashEl) {
+    const displayToken = token ? (token.length > 28 ? token.slice(0, 14) + '...' + token.slice(-8) : token) : 'LIVE-SCALER-SYNC';
+    tokenHashEl.textContent = `TOKEN: ${displayToken} (Live Synced)`;
+  }
+
+  const syncStatusText = document.getElementById('syncStatusText');
+  if (syncStatusText) {
+    syncStatusText.textContent = `🟢 Connected: Scaler QR Live (${secondsLeft}s left)`;
+    syncStatusText.style.color = '#4ade80';
+  }
+
+  const qrFrame = document.querySelector('.mess-qr-frame');
+  if (qrFrame) {
+    qrFrame.classList.remove('pulse-shimmer');
+    void qrFrame.offsetWidth;
+    qrFrame.classList.add('pulse-shimmer');
+  }
+}
+
+function tickMessQrTimer() {
+  const now = Date.now();
+  let secondsLeft;
+
+  // If we received a live tick from Scaler tab recently (< 3 seconds), keep synchronized with Scaler tab
+  if (now - lastLiveSyncedTickTime < 3000) {
+    const elapsed = Math.floor((now - lastLiveSyncedTickTime) / 1000);
+    secondsLeft = Math.max(0, lastLiveSyncedSecondsLeft - elapsed);
+  } else {
+    secondsLeft = 30 - (Math.floor(now / 1000) % 30);
+  }
+  
+  syncMessCountdown(secondsLeft);
 
   // When cycle rolls over, refresh the QR code
   if (secondsLeft === 30 || secondsLeft === 0) {
@@ -3503,8 +3634,7 @@ function tickMessQrTimer() {
 }
 
 function generateMessBookmarkletCode() {
-  const currentAppUrl = window.location.origin + window.location.pathname;
-  return `javascript:(async function(){try{let t=await window.Clerk?.session?.getToken();let r=await fetch('/api/meal/generate-qr',{headers:t?{'Authorization':'Bearer '+t}:{}});let d=await r.json().catch(()=>({}));let target='${currentAppUrl}#sync_mess_qr='+encodeURIComponent(JSON.stringify({jwt:t||'',token:d.token||'',ts:Date.now()}));let win=window.open(target,'sst_schedule_tab');if(!win)window.location.href=target;}catch(e){alert('SST Mess Sync: '+(e.message||e));}})();`.replace(/\s+/g, ' ');
+  return `javascript:(function(){if(window.__sst_live_bridge_active){alert('⚡ SST Mess Live Sync is ALREADY RUNNING and broadcasting in real-time!');return;}window.__sst_live_bridge_active=true;var badge=document.createElement('div');badge.id='sst-live-sync-indicator';badge.innerHTML='⚡ SST Schedule: <span id=\"sst-sync-status\" style=\"color:#4ade80;\">CONNECTED</span> (<span id=\"sst-sync-sec\">30s</span>)';badge.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;background:rgba(15,23,42,0.94);color:#fff;border:2px solid #10b981;border-radius:12px;padding:10px 16px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);';document.body.appendChild(badge);function broadcastToSST(token,sec,qrImg){var msg={type:'SST_MESS_LIVE_TOKEN',token:token||'',secondsLeft:sec!==undefined?sec:30,qrDataUrl:qrImg||'',timestamp:Date.now()};if(window.opener&&!window.opener.closed){try{window.opener.postMessage(msg,'*');}catch(e){}}try{var bc=new BroadcastChannel('sst_mess_sync');bc.postMessage(msg);}catch(e){}}var origFetch=window.fetch;window.fetch=async function(...args){var res=await origFetch.apply(this,args);var url=String(args[0]||'');if(url.includes('/api/meal/generate-qr')){try{var clone=res.clone();clone.json().then(function(d){if(d&&d.token){broadcastToSST(d.token,30,null);var st=document.getElementById('sst-sync-status');if(st)st.textContent='REFRESHED 🟢';}}).catch(function(){});}catch(e){}}return res;};setInterval(function(){var sec=30;var text=document.body.innerText||'';var m=text.match(/Valid\\s+for\\s+(\\d+)s/i);if(m&&m[1]){sec=parseInt(m[1],10);var secEl=document.getElementById('sst-sync-sec');if(secEl)secEl.textContent=sec+'s';}var qrCanvas=document.querySelector('canvas');var qrImg='';if(qrCanvas){try{qrImg=qrCanvas.toDataURL();}catch(e){}}var tickMsg={type:'SST_MESS_LIVE_TICK',secondsLeft:sec,qrDataUrl:qrImg,timestamp:Date.now()};if(window.opener&&!window.opener.closed){try{window.opener.postMessage(tickMsg,'*');}catch(e){}}try{var bc=new BroadcastChannel('sst_mess_sync');bc.postMessage(tickMsg);}catch(e){}},1000);var initCanvas=document.querySelector('canvas');var initImg=initCanvas?initCanvas.toDataURL():'';broadcastToSST('',30,initImg);if(window.Clerk&&window.Clerk.session){window.Clerk.session.getToken().then(function(jwt){if(jwt&&window.opener){window.opener.postMessage({type:'SST_MESS_CLERK_JWT',jwt:jwt},'*');}}).catch(function(){});}alert('✅ SST Mess Real-Time Sync is now ACTIVE! Both tabs will refresh simultaneously.');})();`.replace(/[\r\n\s]+/g, ' ');
 }
 
 function checkIncomingMessSync() {
@@ -4344,30 +4474,89 @@ function setupUIEventListeners() {
     });
   }
 
+  // Force / Early Vendor Pass Override Button (on closed screen)
+  const forceMealPassBtn = document.getElementById('forceMealPassBtn');
+  if (forceMealPassBtn) {
+    forceMealPassBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      // Set override valid for next 3 hours
+      localStorage.setItem('sst_early_meal_override_until', Date.now() + 3 * 3600 * 1000);
+      showToast('⚡ Early vendor mode activated! Showing meal pass.');
+      renderMessModal();
+      refreshMealQrCode(true);
+    });
+  }
+
+  // Closed screen Sync with Scaler Tab Button
+  const closedSyncWithScalerBtn = document.getElementById('closedSyncWithScalerBtn');
+  if (closedSyncWithScalerBtn) {
+    closedSyncWithScalerBtn.addEventListener('click', () => {
+      openConnectedScalerTab();
+    });
+  }
+
+  const openMessDashboardTabBtn = document.getElementById('openMessDashboardTabBtn');
+  if (openMessDashboardTabBtn) {
+    openMessDashboardTabBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openConnectedScalerTab();
+    });
+  }
+
+  // Live Cross-Tab PostMessage Listener for simultaneous sync with Scaler Tab
+  window.addEventListener('message', (event) => {
+    if (!event.data) return;
+
+    if (event.data.type === 'SST_MESS_LIVE_TOKEN') {
+      applyRealLiveSyncedToken(event.data.token, event.data.secondsLeft, event.data.qrDataUrl);
+      showToast('⚡ Scaler QR Synced & Refreshed Live!');
+    } else if (event.data.type === 'SST_MESS_LIVE_TICK') {
+      if (event.data.secondsLeft !== undefined) {
+        lastLiveSyncedTickTime = Date.now();
+        lastLiveSyncedSecondsLeft = event.data.secondsLeft;
+        syncMessCountdown(event.data.secondsLeft);
+      }
+      if (event.data.qrDataUrl) {
+        const wrap = document.getElementById('messQrCanvasWrap');
+        if (wrap && (!wrap.querySelector('img') || wrap.querySelector('img').src !== event.data.qrDataUrl)) {
+          wrap.innerHTML = `<img src="${event.data.qrDataUrl}" alt="Real Scaler Mess QR" style="width:220px;height:220px;display:block;margin:0 auto;border-radius:8px;" />`;
+        }
+      }
+    } else if (event.data.type === 'SST_MESS_CLERK_JWT') {
+      if (event.data.jwt) {
+        clerkSessionJwt = event.data.jwt;
+        localStorage.setItem('sst_clerk_jwt', event.data.jwt);
+      }
+    }
+  });
+
   // Cross-Tab Broadcast Channel listener for live sync
   try {
     if (typeof BroadcastChannel !== 'undefined') {
       const messChannel = new BroadcastChannel('sst_mess_sync');
       messChannel.onmessage = (event) => {
-        if (event.data && (event.data.jwt || event.data.token)) {
-          if (event.data.jwt) {
-            clerkSessionJwt = event.data.jwt;
-            localStorage.setItem('sst_clerk_jwt', event.data.jwt);
-          }
-          if (event.data.token) {
-            realSyncedMealToken = event.data.token;
-            currentMealToken = event.data.token;
-            localStorage.setItem('sst_real_meal_token', event.data.token);
-            localStorage.setItem('sst_real_meal_ts', Date.now());
-          }
-          showToast('🍱 Real Mess Pass Synced via Live Bridge!');
-          renderMessModal();
+        if (!event.data) return;
+        if (event.data.token || event.data.qrDataUrl) {
+          applyRealLiveSyncedToken(event.data.token, event.data.secondsLeft, event.data.qrDataUrl);
+          showToast('🍱 Real Mess Pass Synced via Broadcast Bridge!');
+        } else if (event.data.jwt) {
+          clerkSessionJwt = event.data.jwt;
+          localStorage.setItem('sst_clerk_jwt', event.data.jwt);
         }
       };
     }
   } catch (err) {
     console.log('[BroadcastChannel Note]', err);
   }
+
+  // Cross-Tab Storage Event Listener
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'sst_real_meal_token' && e.newValue) {
+      applyRealLiveSyncedToken(e.newValue);
+    } else if (e.key === 'sst_early_meal_override_until') {
+      renderMessModal();
+    }
+  });
 
   // Copy Bookmarklet Button
   const copyBookmarkletBtn = document.getElementById('copyBookmarkletBtn');

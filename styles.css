@@ -4060,18 +4060,19 @@ body[data-theme="pink"] .qr-instruction-text {
 
 /* Wrong Meal Time Card (Matches Screenshot 1) */
 .mess-closed-card {
-  padding: 30px 20px;
+  padding: 24px 16px;
   text-align: center;
 }
 .mess-closed-inner {
-  max-width: 440px;
+  max-width: 480px;
   margin: 0 auto;
-  background: #fdf8e6;
-  border: 1.5px solid #f6e05e;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(234, 179, 8, 0.4);
   border-radius: 16px;
-  padding: 28px 24px;
-  color: #744210;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 24px 20px;
+  color: #f8fafc;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
 }
 body[data-theme="minecraft"] .mess-closed-inner {
   background: #332612;
@@ -4098,24 +4099,31 @@ body[data-theme="pink"] .mess-closed-inner {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   border-radius: 50%;
-  background: rgba(234, 179, 8, 0.2);
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.35);
 }
 .closed-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   margin-bottom: 6px;
+  color: #facc15;
 }
 .closed-desc {
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 8px;
-  opacity: 0.9;
+  color: #e2e8f0;
 }
 .closed-countdown {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  opacity: 0.85;
+  color: #fbbf24;
+  margin-bottom: 4px;
+}
+.closed-actions-group .mc-btn {
+  font-size: 10px;
+  padding: 8px 14px;
 }
 
 /* Schedule Grid: EXACTLY 3 MEALS (Breakfast, Lunch, Dinner) */
