@@ -3636,41 +3636,41 @@ function tickMessQrTimer() {
 }
 
 function generateMessBookmarkletCode() {
-  return `javascript:(function(){if(window.__sst_live_bridge_active){alert('⚡ SST Mess Live Sync is ALREADY RUNNING and broadcasting in real-time!');return;}window.__sst_live_bridge_active=true;var badge=document.createElement('div');badge.id='sst-live-sync-indicator';badge.innerHTML='⚡ SST Schedule: <span id=\"sst-sync-status\" style=\"color:#4ade80;\">CONNECTED</span> (<span id=\"sst-sync-sec\">30s</span>)';badge.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;background:rgba(15,23,42,0.94);color:#fff;border:2px solid #10b981;border-radius:12px;padding:10px 16px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);';document.body.appendChild(badge);function broadcastToSST(token,sec,qrImg){var msg={type:'SST_MESS_LIVE_TOKEN',token:token||'',secondsLeft:sec!==undefined?sec:30,qrDataUrl:qrImg||'',timestamp:Date.now()};if(window.opener&&!window.opener.closed){try{window.opener.postMessage(msg,'*');}catch(e){}}try{var bc=new BroadcastChannel('sst_mess_sync');bc.postMessage(msg);}catch(e){}}var origFetch=window.fetch;window.fetch=async function(...args){var res=await origFetch.apply(this,args);var url=String(args[0]||'');if(url.includes('/api/meal/generate-qr')){try{var clone=res.clone();clone.json().then(function(d){if(d&&d.token){broadcastToSST(d.token,30,null);var st=document.getElementById('sst-sync-status');if(st)st.textContent='REFRESHED 🟢';}}).catch(function(){});}catch(e){}}return res;};setInterval(function(){var sec=30;var text=document.body.innerText||'';var m=text.match(/Valid\\s+for\\s+(\\d+)s/i);if(m&&m[1]){sec=parseInt(m[1],10);var secEl=document.getElementById('sst-sync-sec');if(secEl)secEl.textContent=sec+'s';}var qrCanvas=document.querySelector('canvas');var qrImg='';if(qrCanvas){try{qrImg=qrCanvas.toDataURL();}catch(e){}}var tickMsg={type:'SST_MESS_LIVE_TICK',secondsLeft:sec,qrDataUrl:qrImg,timestamp:Date.now()};if(window.opener&&!window.opener.closed){try{window.opener.postMessage(tickMsg,'*');}catch(e){}}try{var bc=new BroadcastChannel('sst_mess_sync');bc.postMessage(tickMsg);}catch(e){}},1000);var initCanvas=document.querySelector('canvas');var initImg=initCanvas?initCanvas.toDataURL():'';broadcastToSST('',30,initImg);if(window.Clerk&&window.Clerk.session){window.Clerk.session.getToken().then(function(jwt){if(jwt&&window.opener){window.opener.postMessage({type:'SST_MESS_CLERK_JWT',jwt:jwt},'*');}}).catch(function(){});}alert('✅ SST Mess Real-Time Sync is now ACTIVE! Both tabs will refresh simultaneously.');})();`.replace(/[\r\n\s]+/g, ' ');
+  const currentAppUrl = window.location.origin + window.location.pathname;
+  return `javascript:(function(){if(window.__sst_live_bridge_active){alert('⚡ SST Mess Live Sync is ALREADY RUNNING and broadcasting in real-time!');return;}window.__sst_live_bridge_active=true;var targetApp='${currentAppUrl}';var badge=document.createElement('div');badge.id='sst-live-sync-indicator';badge.innerHTML='⚡ SST Schedule: <span id=\"sst-sync-status\" style=\"color:#4ade80;\">CONNECTED</span> (<span id=\"sst-sync-sec\">30s</span>)';badge.style.cssText='position:fixed;bottom:20px;right:20px;z-index:999999;background:rgba(15,23,42,0.94);color:#fff;border:2px solid #10b981;border-radius:12px;padding:10px 16px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);';document.body.appendChild(badge);function streamToSST(token,sec,qrImg){var msg={type:'SST_MESS_LIVE_TOKEN',token:token||'',secondsLeft:sec!==undefined?sec:30,qrDataUrl:qrImg||'',timestamp:Date.now()};if(window.opener&&!window.opener.closed){try{window.opener.postMessage(msg,'*');}catch(e){}}try{var f=document.getElementById('sst-bridge-iframe');if(!f){f=document.createElement('iframe');f.id='sst-bridge-iframe';f.style.display='none';document.body.appendChild(f);}f.src=targetApp+'#sync_bridge='+encodeURIComponent(JSON.stringify(msg));}catch(e){}}var origFetch=window.fetch;window.fetch=async function(...args){var res=await origFetch.apply(this,args);var url=String(args[0]||'');if(url.includes('/api/meal/generate-qr')){try{var clone=res.clone();clone.json().then(function(d){if(d&&d.token){streamToSST(d.token,30,null);var st=document.getElementById('sst-sync-status');if(st)st.textContent='REFRESHED 🟢';}}).catch(function(){});}catch(e){}}return res;};setInterval(function(){var sec=30;var text=document.body.innerText||'';var m=text.match(/Valid\\s+for\\s+(\\d+)s/i);if(m&&m[1]){sec=parseInt(m[1],10);var secEl=document.getElementById('sst-sync-sec');if(secEl)secEl.textContent=sec+'s';}var qrCanvas=document.querySelector('canvas');var qrImg='';if(qrCanvas){try{qrImg=qrCanvas.toDataURL();}catch(e){}}var tickMsg={type:'SST_MESS_LIVE_TICK',secondsLeft:sec,qrDataUrl:qrImg,timestamp:Date.now()};if(window.opener&&!window.opener.closed){try{window.opener.postMessage(tickMsg,'*');}catch(e){}}if(qrImg&&sec===29){streamToSST('',sec,qrImg);}},1000);var initCanvas=document.querySelector('canvas');var initImg=initCanvas?initCanvas.toDataURL():'';streamToSST('',30,initImg);alert('✅ SST Mess Real-Time Sync is now ACTIVE! Both tabs will refresh simultaneously.');})();`.replace(/[\r\n\s]+/g, ' ');
 }
 
 function checkIncomingMessSync() {
   const hash = window.location.hash;
-  if (hash.includes('sync_mess_qr=')) {
+  if (hash.includes('sync_bridge=') || hash.includes('sync_mess_qr=')) {
     try {
-      const match = hash.match(/sync_mess_qr=([^&]+)/);
-      if (match && match[1]) {
-        const payload = JSON.parse(decodeURIComponent(match[1]));
+      let raw = '';
+      if (hash.includes('sync_bridge=')) {
+        raw = hash.split('sync_bridge=')[1];
+      } else {
+        raw = hash.split('sync_mess_qr=')[1];
+      }
+      if (raw) {
+        const payload = JSON.parse(decodeURIComponent(raw));
         if (payload) {
+          if (payload.token || payload.qrDataUrl) {
+            applyRealLiveSyncedToken(payload.token || '', payload.secondsLeft, payload.qrDataUrl || '');
+          }
           if (payload.jwt) {
             clerkSessionJwt = payload.jwt;
             localStorage.setItem('sst_clerk_jwt', payload.jwt);
           }
-          if (payload.token) {
-            realSyncedMealToken = payload.token;
-            currentMealToken = payload.token;
-            localStorage.setItem('sst_real_meal_token', payload.token);
-            localStorage.setItem('sst_real_meal_ts', payload.ts || Date.now());
-          }
-          showToast('🍱 Real Scaler Mess QR Synced Successfully!');
-          const messModal = document.getElementById('messModal');
-          if (messModal) {
-            renderMessModal();
-            openModal(messModal);
+          if (window.self === window.top) {
+            showToast('🍱 Real Scaler Mess QR Synced Successfully!');
           }
         }
       }
     } catch (e) {
       console.warn('[Mess Sync Error]', e);
     }
-    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
   }
 }
+window.addEventListener('hashchange', checkIncomingMessSync);
 
 // ==========================================
 // SCALER DASHBOARD ANNOUNCEMENTS & NOTIFICATIONS
