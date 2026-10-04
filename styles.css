@@ -4066,14 +4066,14 @@ body[data-theme="pink"] .mess-closed-inner {
   opacity: 0.85;
 }
 
-/* Schedule Grid */
+/* Schedule Grid: EXACTLY 3 MEALS (Breakfast, Lunch, Dinner) */
 .mess-schedule-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-top: 16px;
 }
-@media (max-width: 540px) {
+@media (max-width: 680px) {
   .mess-schedule-grid {
     grid-template-columns: 1fr;
   }
@@ -4127,6 +4127,18 @@ body[data-theme="pink"] .slot-name {
 body[data-theme="pink"] .slot-time {
   color: #9d174d;
 }
+.slot-source-pill {
+  font-size: 8px;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-top: 2px;
+}
+body[data-theme="pink"] .slot-source-pill {
+  color: #db2777;
+}
+body[data-theme="minecraft"] .slot-source-pill {
+  color: #fcd34d;
+}
 .slot-status-pill {
   font-size: 8px;
   font-weight: 800;
@@ -4138,6 +4150,114 @@ body[data-theme="pink"] .slot-time {
 .mess-slot-card.active-slot .slot-status-pill {
   background: #22c55e;
   color: #000;
+}
+
+/* Real Mess Sync Box */
+.mess-sync-box {
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: entrance-slide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+body[data-theme="minecraft"] .mess-sync-box {
+  border: 2px solid #000;
+  border-radius: 0;
+  background: #1c1c24;
+}
+body[data-theme="minimal"] .mess-sync-box {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 14px;
+}
+body[data-theme="pink"] .mess-sync-box {
+  background: #fff;
+  border: 2px solid #fed7aa;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(251, 146, 60, 0.15);
+}
+
+.sync-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sync-box-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fb923c;
+  letter-spacing: 0.04em;
+}
+body[data-theme="pink"] .sync-box-title {
+  color: #c2410c;
+}
+.sync-box-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+}
+.sync-box-desc {
+  font-size: 11px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+body[data-theme="pink"] .sync-box-desc {
+  color: #7c2d12;
+}
+
+.sync-actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sync-btn {
+  flex: 1;
+  min-width: 130px;
+  font-size: 10px !important;
+  padding: 8px 10px !important;
+  text-align: center;
+  text-decoration: none;
+}
+
+.sync-manual-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.sync-text-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 11px;
+  font-family: monospace;
+}
+body[data-theme="pink"] .sync-text-input {
+  background: #fff;
+  border: 2px solid #fed7aa;
+  color: #7c2d12;
+  border-radius: 10px;
+}
+.sync-status-indicator {
+  font-size: 10px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+body[data-theme="pink"] .sync-status-indicator {
+  color: #9d174d;
 }
 
 /* External Links Row */
@@ -4176,6 +4296,39 @@ body[data-theme="pink"] .mess-external-link {
 }
 body[data-theme="pink"] .mess-external-link:hover {
   background: #fce7f3;
+}
+
+/* Theme-specific Modal Header Fixes (Fixes screenshot black header in Pink theme) */
+body[data-theme="pink"] .mc-modal-header {
+  background: #fff0f5 !important;
+  border-bottom: 2px solid #fbcfe8 !important;
+  border-radius: 26px 26px 0 0 !important;
+}
+body[data-theme="pink"] .mc-modal-title {
+  color: #db2777 !important;
+  text-shadow: none !important;
+  font-family: 'Fredoka', 'Quicksand', cursive, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+body[data-theme="pink"] .mc-modal-sub {
+  color: #be185d !important;
+}
+
+body[data-theme="minimal"] .mc-modal-header {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+body[data-theme="minimal"] .mc-modal-title {
+  color: #f8fafc !important;
+  text-shadow: none !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+body[data-theme="minimal"] .mc-modal-sub {
+  color: #94a3b8 !important;
 }
 
 

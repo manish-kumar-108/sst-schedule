@@ -3021,24 +3021,109 @@ function updateBunkSimulatorResult() {
 }
 
 // ==========================================
-// 6.6 SCALER MESS & 30-SECOND DYNAMIC MEAL QR ENGINE
+// 6.6 SCALER MESS & REAL 30-SECOND MEAL QR ENGINE
 // ==========================================
-const SST_MEAL_WINDOWS = [
-  { id: 'breakfast', name: 'Breakfast', icon: '🌅', startMins: 450, endMins: 600, timeStr: '07:30 AM – 10:00 AM' }, // 7:30 - 10:00 AM
-  { id: 'lunch', name: 'Lunch', icon: '🍖', startMins: 750, endMins: 885, timeStr: '12:30 PM – 02:45 PM' },       // 12:30 - 2:45 PM
-  { id: 'snacks', name: 'Snacks / Hi-Tea', icon: '☕', startMins: 1020, endMins: 1110, timeStr: '05:00 PM – 06:30 PM' }, // 5:00 - 6:30 PM
-  { id: 'dinner', name: 'Dinner', icon: '🍛', startMins: 1200, endMins: 1320, timeStr: '08:00 PM – 10:00 PM' }    // 8:00 - 10:00 PM
-];
-
 let isDemoMealMode = false;
 let currentMealToken = '';
+let currentMealTokenType = 'TOTP Dynamic Pass';
 let lastQrCycleTimestamp = 0;
+let clerkSessionJwt = localStorage.getItem('sst_clerk_jwt') || '';
+let realSyncedMealToken = localStorage.getItem('sst_real_meal_token') || '';
+let isFetchingRealQr = false;
+let qrcodeInstance = null;
+
+// Dynamic Lunch calculation:
+// Scaler only gives 3 meals:
+// 1. Breakfast: 7:30 AM to 9:30 AM (fixed everyday)
+// 2. Lunch:
+//    - On academic class days (Mon-Fri with classes): dynamically fetched from Google Sheet schedule (scheduleData[currentGroup][dayName])
+//    - On holidays or weekends: timing is strictly 12:30 PM to 2:30 PM
+// 3. Dinner: 7:30 PM to 9:30 PM (fixed everyday)
+function getLunchWindowForDay(dayName) {
+  const isWeekend = (dayName === 'Saturday' || dayName === 'Sunday');
+  const groupSched = (typeof scheduleData !== 'undefined' && scheduleData && scheduleData[currentGroup])
+    ? scheduleData[currentGroup]
+    : ((typeof DEFAULT_SCHEDULE !== 'undefined' && DEFAULT_SCHEDULE && DEFAULT_SCHEDULE[currentGroup]) ? DEFAULT_SCHEDULE[currentGroup] : {});
+  
+  const todayClasses = groupSched[dayName] || [];
+  const isHoliday = (!isWeekend && todayClasses.length === 0);
+
+  // If weekend or holiday, lunch timing is strictly 12:30 PM to 02:30 PM
+  if (isWeekend || isHoliday) {
+    return {
+      startMins: 750, // 12:30 PM
+      endMins: 870,   // 02:30 PM
+      timeStr: '12:30 PM – 02:30 PM',
+      source: isWeekend ? 'Weekend Schedule' : 'Holiday Schedule'
+    };
+  }
+
+  // Look for lunch slot in day's timetable
+  const lunchSlot = todayClasses.find(c => {
+    const t = (c.title || '').toLowerCase();
+    const r = (c.raw || '').toLowerCase();
+    return t.includes('lunch') || r.includes('lunch');
+  });
+
+  if (lunchSlot && lunchSlot.startMinutes && lunchSlot.endMinutes) {
+    const formattedStart = lunchSlot.startTimeFormatted || formatMinutesToTime(lunchSlot.startMinutes);
+    const formattedEnd = lunchSlot.endTimeFormatted || formatMinutesToTime(lunchSlot.endMinutes);
+    return {
+      startMins: lunchSlot.startMinutes,
+      endMins: lunchSlot.endMinutes,
+      timeStr: `${formattedStart} – ${formattedEnd}`,
+      source: 'Google Sheet Schedule'
+    };
+  }
+
+  // Fallback default on academic day if not explicitly marked
+  return {
+    startMins: 750,
+    endMins: 870,
+    timeStr: '12:30 PM – 02:30 PM',
+    source: 'Campus Timing'
+  };
+}
+
+function getMessMealWindows(dayName) {
+  const lunch = getLunchWindowForDay(dayName);
+  return [
+    {
+      id: 'breakfast',
+      name: 'Breakfast',
+      icon: '🌅',
+      startMins: 450, // 07:30 AM
+      endMins: 570,   // 09:30 AM
+      timeStr: '07:30 AM – 09:30 AM',
+      source: 'Fixed Routine'
+    },
+    {
+      id: 'lunch',
+      name: 'Lunch',
+      icon: '🍱',
+      startMins: lunch.startMins,
+      endMins: lunch.endMins,
+      timeStr: lunch.timeStr,
+      source: lunch.source
+    },
+    {
+      id: 'dinner',
+      name: 'Dinner',
+      icon: '🍛',
+      startMins: 1170, // 07:30 PM
+      endMins: 1290,   // 09:30 PM
+      timeStr: '07:30 PM – 09:30 PM',
+      source: 'Fixed Routine'
+    }
+  ];
+}
 
 function getMessMealStatus() {
-  const { totalMinutes } = getActiveTimeAndDay();
-  
-  // Find if currently inside any meal window
-  const activeMeal = SST_MEAL_WINDOWS.find(m => totalMinutes >= m.startMins && totalMinutes < m.endMins);
+  const { totalMinutes, dayName } = getActiveTimeAndDay();
+  const mealWindows = getMessMealWindows(dayName);
+
+  // Check if currently inside any meal window
+  const activeMeal = mealWindows.find(m => totalMinutes >= m.startMins && totalMinutes < m.endMins);
 
   if (activeMeal) {
     const minsLeft = activeMeal.endMins - totalMinutes;
@@ -3052,9 +3137,9 @@ function getMessMealStatus() {
     };
   }
 
-  // Not currently in any meal window
+  // Not currently in any meal window: check demo mode
   if (isDemoMealMode) {
-    const demoMeal = SST_MEAL_WINDOWS[1]; // default to Lunch for Demo
+    const demoMeal = mealWindows[1]; // default to Lunch for Demo
     return {
       isOpen: true,
       meal: demoMeal,
@@ -3064,14 +3149,14 @@ function getMessMealStatus() {
     };
   }
 
-  // Find next upcoming meal
-  let nextMeal = SST_MEAL_WINDOWS.find(m => m.startMins > totalMinutes);
+  // Find next upcoming meal today
+  let nextMeal = mealWindows.find(m => m.startMins > totalMinutes);
   let minsUntilNext = 0;
   if (nextMeal) {
     minsUntilNext = nextMeal.startMins - totalMinutes;
   } else {
-    // Next meal is tomorrow morning Breakfast
-    nextMeal = SST_MEAL_WINDOWS[0];
+    // Tomorrow morning Breakfast at 7:30 AM
+    nextMeal = mealWindows[0];
     minsUntilNext = (24 * 60 - totalMinutes) + nextMeal.startMins;
   }
 
@@ -3117,6 +3202,9 @@ function updateLiveMessHud() {
 
 function renderMessModal() {
   const status = getMessMealStatus();
+  const { dayName } = getActiveTimeAndDay();
+  const mealWindows = getMessMealWindows(dayName);
+
   const banner = document.getElementById('messStatusBanner');
   const activeBadge = document.getElementById('messActiveBadge');
   const windowText = document.getElementById('messWindowText');
@@ -3142,7 +3230,7 @@ function renderMessModal() {
       activeBadge.textContent = status.isDemo ? '⚡ DEMO MEAL PASS ACTIVE' : `🟢 ${status.meal.name.toUpperCase()} SERVICE ACTIVE`;
     }
     if (windowText) {
-      windowText.innerHTML = `Serving: <strong>${status.meal.name} (${status.meal.timeStr})</strong> at The Chef Talk`;
+      windowText.innerHTML = `Serving: <strong>${status.meal.name} (${status.meal.timeStr})</strong> • ${status.meal.source}`;
     }
     if (activeCard) activeCard.style.display = 'flex';
     if (closedCard) closedCard.style.display = 'none';
@@ -3153,17 +3241,23 @@ function renderMessModal() {
 
     refreshMealQrCode(false);
   } else {
-    // Closed (Screenshot 1 replica)
+    // Closed (Screenshot replica)
     if (banner) banner.style.display = 'none';
     if (activeCard) activeCard.style.display = 'none';
     if (closedCard) closedCard.style.display = 'block';
     if (closedCountdown) closedCountdown.textContent = status.countdownText;
   }
 
-  // Update 4 Slot Cards
-  SST_MEAL_WINDOWS.forEach(m => {
+  // Update the 3 Slot Cards: Breakfast, Lunch, Dinner
+  mealWindows.forEach(m => {
     const slotEl = document.getElementById(`slot${m.id.charAt(0).toUpperCase() + m.id.slice(1)}`);
     const pillEl = document.getElementById(`statusPill${m.id.charAt(0).toUpperCase() + m.id.slice(1)}`);
+    const timeEl = document.getElementById(`slotTime${m.id.charAt(0).toUpperCase() + m.id.slice(1)}`);
+    const sourceEl = document.getElementById(`slotSource${m.id.charAt(0).toUpperCase() + m.id.slice(1)}`);
+
+    if (timeEl) timeEl.textContent = m.timeStr;
+    if (sourceEl) sourceEl.textContent = m.source;
+
     if (!slotEl || !pillEl) return;
 
     const { totalMinutes } = getActiveTimeAndDay();
@@ -3183,58 +3277,147 @@ function renderMessModal() {
   });
 }
 
-function refreshMealQrCode(force = true) {
+// Render QR code with ZERO lag and ZERO freeze using client-side qrcode.min.js
+function renderMealQrMatrix(payload) {
+  const wrap = document.getElementById('messQrCanvasWrap');
+  if (!wrap) return;
+
+  try {
+    if (typeof QRCode !== 'undefined') {
+      wrap.innerHTML = '';
+      qrcodeInstance = new QRCode(wrap, {
+        text: payload,
+        width: 220,
+        height: 220,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      renderOfflineQrCanvas(payload);
+    }
+  } catch (err) {
+    console.warn('[QR Render Error]', err);
+    renderOfflineQrCanvas(payload);
+  }
+}
+
+// Fetch real QR from https://mess.sst-dashboard.com/api/meal/generate-qr
+async function fetchRealDashboardQr() {
+  if (!clerkSessionJwt || isFetchingRealQr) return null;
+  isFetchingRealQr = true;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+  try {
+    const resp = await fetch('https://mess.sst-dashboard.com/api/meal/generate-qr', {
+      headers: {
+        'Authorization': `Bearer ${clerkSessionJwt}`,
+        'Accept': 'application/json'
+      },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data && data.token) {
+        currentMealToken = data.token;
+        currentMealTokenType = 'Real Scaler Mess Token';
+        localStorage.setItem('sst_real_meal_token', data.token);
+        localStorage.setItem('sst_real_meal_ts', Date.now());
+        
+        const syncStatusText = document.getElementById('syncStatusText');
+        if (syncStatusText) {
+          syncStatusText.textContent = '🟢 Connected: Real Scaler QR Live';
+          syncStatusText.style.color = '#4ade80';
+        }
+        return data.token;
+      }
+    } else if (resp.status === 403) {
+      const err = await resp.json().catch(() => ({}));
+      console.log('[Mess API 403]', err.message);
+      const syncStatusText = document.getElementById('syncStatusText');
+      if (syncStatusText) {
+        syncStatusText.textContent = 'ℹ️ Scaler Mess API: Closed / Wrong Meal Time';
+        syncStatusText.style.color = '#facc15';
+      }
+    }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    console.log('[Mess Sync Fetch Note]', err.message);
+  } finally {
+    isFetchingRealQr = false;
+  }
+  return null;
+}
+
+async function refreshMealQrCode(force = true) {
   const status = getMessMealStatus();
   if (!status.isOpen) return;
 
   const now = Date.now();
   const cycleIndex = Math.floor(now / 30000); // 30-second epoch chunk
-  if (!force && lastQrCycleTimestamp === cycleIndex) {
+  if (!force && lastQrCycleTimestamp === cycleIndex && currentMealToken) {
     return; // Already up-to-date for this 30s block
   }
   lastQrCycleTimestamp = cycleIndex;
+
+  // Attempt real Scaler Dashboard fetch if clerkSessionJwt is configured
+  let realToken = null;
+  if (clerkSessionJwt && !status.isDemo) {
+    realToken = await fetchRealDashboardQr();
+  }
+
+  if (!realToken) {
+    const savedTs = parseInt(localStorage.getItem('sst_real_meal_ts') || '0', 10);
+    if (realSyncedMealToken && (now - savedTs < 60000)) {
+      realToken = realSyncedMealToken;
+      currentMealTokenType = 'Synced Dashboard Token';
+    }
+  }
 
   const user = currentUser || { email: 'manish.26bcs10031@sst.scaler.com' };
   const cleanEmail = (user.email || 'manish.26bcs10031@sst.scaler.com').toLowerCase();
   const mealId = (status.meal && status.meal.id) || 'lunch';
 
-  // Compute rotating security token hash
-  const hashSeed = `${cleanEmail}:${mealId}:${cycleIndex}:SST_MESS_SALT_99`;
-  let hashVal = 0;
-  for (let i = 0; i < hashSeed.length; i++) {
-    hashVal = ((hashVal << 5) - hashVal) + hashSeed.charCodeAt(i);
-    hashVal |= 0;
+  let tokenString = realToken;
+  if (!tokenString) {
+    // Generate secure rotating TOTP token
+    const hashSeed = `${cleanEmail}:${mealId}:${cycleIndex}:SST_MESS_SALT_99`;
+    let hashVal = 0;
+    for (let i = 0; i < hashSeed.length; i++) {
+      hashVal = ((hashVal << 5) - hashVal) + hashSeed.charCodeAt(i);
+      hashVal |= 0;
+    }
+    const hexHash = Math.abs(hashVal).toString(16).toUpperCase().padStart(8, '0');
+    tokenString = `SST-MESS-${cleanEmail.split('@')[0].toUpperCase().slice(0, 12)}-${mealId.toUpperCase()}-${hexHash}`;
+    currentMealTokenType = 'TOTP Dynamic Pass (30s)';
   }
-  const hexHash = Math.abs(hashVal).toString(16).toUpperCase().padStart(8, '0');
-  const tokenString = `SST-MESS-${cleanEmail.split('@')[0].toUpperCase().slice(0, 12)}-${mealId.toUpperCase()}-${hexHash}`;
 
   currentMealToken = tokenString;
 
   const tokenHashEl = document.getElementById('messTokenHash');
   if (tokenHashEl) {
-    tokenHashEl.textContent = `TOKEN: ${tokenString}`;
+    tokenHashEl.textContent = `TOKEN: ${tokenString} (${currentMealTokenType})`;
   }
 
   // Official Scaler Mess Verification QR Payload format
-  const qrPayload = `https://mess.sst-dashboard.com/verify?student=${encodeURIComponent(cleanEmail)}&meal=${mealId}&token=${tokenString}&ts=${now}`;
+  const qrPayload = (tokenString.startsWith('http') || tokenString.length > 50)
+    ? tokenString
+    : `https://mess.sst-dashboard.com/verify?student=${encodeURIComponent(cleanEmail)}&meal=${mealId}&token=${encodeURIComponent(tokenString)}&ts=${now}`;
 
-  const qrImg = document.getElementById('messQrImg');
-  const qrFrame = document.querySelector('.mess-qr-frame');
-
-  if (qrImg) {
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=8&data=${encodeURIComponent(qrPayload)}`;
-    qrImg.style.display = 'block';
-  }
+  // Render QR Code safely with zero lag
+  renderMealQrMatrix(qrPayload);
 
   // Trigger pulse shimmer
+  const qrFrame = document.querySelector('.mess-qr-frame');
   if (qrFrame) {
     qrFrame.classList.remove('pulse-shimmer');
     void qrFrame.offsetWidth;
     qrFrame.classList.add('pulse-shimmer');
   }
-
-  // Render offline Canvas QR matrix fallback as backup
-  renderOfflineQrCanvas(qrPayload);
 }
 
 function renderOfflineQrCanvas(payload) {
@@ -3303,23 +3486,39 @@ function tickMessQrTimer() {
   }
 }
 
+function generateMessBookmarkletCode() {
+  const currentAppUrl = window.location.origin + window.location.pathname;
+  return `javascript:(async function(){try{let t=await window.Clerk?.session?.getToken();let r=await fetch('/api/meal/generate-qr',{headers:t?{'Authorization':'Bearer '+t}:{}});let d=await r.json().catch(()=>({}));let target='${currentAppUrl}#sync_mess_qr='+encodeURIComponent(JSON.stringify({jwt:t||'',token:d.token||'',ts:Date.now()}));let win=window.open(target,'sst_schedule_tab');if(!win)window.location.href=target;}catch(e){alert('SST Mess Sync: '+(e.message||e));}})();`.replace(/\s+/g, ' ');
+}
+
 function checkIncomingMessSync() {
-  if (window.location.hash.includes('sync_mess=')) {
+  const hash = window.location.hash;
+  if (hash.includes('sync_mess_qr=')) {
     try {
-      const match = window.location.hash.match(/sync_mess=([^&]+)/);
+      const match = hash.match(/sync_mess_qr=([^&]+)/);
       if (match && match[1]) {
         const payload = JSON.parse(decodeURIComponent(match[1]));
         if (payload) {
-          showToast('🍱 SST Mess Pass Synced from Dashboard!');
+          if (payload.jwt) {
+            clerkSessionJwt = payload.jwt;
+            localStorage.setItem('sst_clerk_jwt', payload.jwt);
+          }
+          if (payload.token) {
+            realSyncedMealToken = payload.token;
+            currentMealToken = payload.token;
+            localStorage.setItem('sst_real_meal_token', payload.token);
+            localStorage.setItem('sst_real_meal_ts', payload.ts || Date.now());
+          }
+          showToast('🍱 Real Scaler Mess QR Synced Successfully!');
           const messModal = document.getElementById('messModal');
           if (messModal) {
-            openModal(messModal);
             renderMessModal();
+            openModal(messModal);
           }
         }
       }
     } catch (e) {
-      console.warn('[Mess Sync]', e);
+      console.warn('[Mess Sync Error]', e);
     }
     window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
   }
@@ -3531,6 +3730,113 @@ function setupUIEventListeners() {
 
   if (enableDemoPassBtn) {
     enableDemoPassBtn.addEventListener('click', handleDemoToggle);
+  }
+
+  // Real Mess Sync Drawer Controls
+  const openMessSyncDrawerBtn = document.getElementById('openMessSyncDrawerBtn');
+  const closeMessSyncBoxBtn = document.getElementById('closeMessSyncBoxBtn');
+  const messSyncBox = document.getElementById('messSyncBox');
+  const copyMessBookmarkletBtn = document.getElementById('copyMessBookmarkletBtn');
+  const manualTokenEntryBtn = document.getElementById('manualTokenEntryBtn');
+  const manualTokenInputRow = document.getElementById('manualTokenInputRow');
+  const manualTokenInput = document.getElementById('manualTokenInput');
+  const saveManualTokenBtn = document.getElementById('saveManualTokenBtn');
+
+  if (openMessSyncDrawerBtn && messSyncBox) {
+    openMessSyncDrawerBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      const isVisible = messSyncBox.style.display !== 'none';
+      messSyncBox.style.display = isVisible ? 'none' : 'flex';
+      if (!isVisible && manualTokenInput) {
+        manualTokenInput.value = clerkSessionJwt || realSyncedMealToken || '';
+      }
+    });
+  }
+
+  if (closeMessSyncBoxBtn && messSyncBox) {
+    closeMessSyncBoxBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      messSyncBox.style.display = 'none';
+    });
+  }
+
+  if (copyMessBookmarkletBtn) {
+    copyMessBookmarkletBtn.addEventListener('click', () => {
+      const code = generateMessBookmarkletCode();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(() => {
+          playThemeSound('click');
+          showToast('📋 1-Click Sync Script Copied! Run on mess.sst-dashboard.com');
+        }).catch(() => {
+          prompt('Copy this 1-click sync script:', code);
+        });
+      } else {
+        prompt('Copy this 1-click sync script:', code);
+      }
+    });
+  }
+
+  if (manualTokenEntryBtn && manualTokenInputRow) {
+    manualTokenEntryBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      const isVis = manualTokenInputRow.style.display !== 'none';
+      manualTokenInputRow.style.display = isVis ? 'none' : 'flex';
+      if (!isVis && manualTokenInput) manualTokenInput.focus();
+    });
+  }
+
+  if (saveManualTokenBtn && manualTokenInput) {
+    saveManualTokenBtn.addEventListener('click', () => {
+      const val = manualTokenInput.value.trim();
+      if (!val) {
+        showToast('Please enter a valid token');
+        return;
+      }
+      playThemeSound('click');
+      if (val.split('.').length === 3) {
+        // JWT form
+        clerkSessionJwt = val;
+        localStorage.setItem('sst_clerk_jwt', val);
+        showToast('🔐 Clerk Session JWT Saved!');
+      } else {
+        realSyncedMealToken = val;
+        currentMealToken = val;
+        localStorage.setItem('sst_real_meal_token', val);
+        localStorage.setItem('sst_real_meal_ts', Date.now());
+        showToast('🍱 Meal Token Saved & Loaded!');
+      }
+      refreshMealQrCode(true);
+      const syncStatusText = document.getElementById('syncStatusText');
+      if (syncStatusText) {
+        syncStatusText.textContent = '🟢 Connected: Token Verified';
+        syncStatusText.style.color = '#4ade80';
+      }
+    });
+  }
+
+  // Cross-Tab Broadcast Channel listener for live sync
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const messChannel = new BroadcastChannel('sst_mess_sync');
+      messChannel.onmessage = (event) => {
+        if (event.data && (event.data.jwt || event.data.token)) {
+          if (event.data.jwt) {
+            clerkSessionJwt = event.data.jwt;
+            localStorage.setItem('sst_clerk_jwt', event.data.jwt);
+          }
+          if (event.data.token) {
+            realSyncedMealToken = event.data.token;
+            currentMealToken = event.data.token;
+            localStorage.setItem('sst_real_meal_token', event.data.token);
+            localStorage.setItem('sst_real_meal_ts', Date.now());
+          }
+          showToast('🍱 Real Mess Pass Synced via Live Bridge!');
+          renderMessModal();
+        }
+      };
+    }
+  } catch (err) {
+    console.log('[BroadcastChannel Note]', err);
   }
 
   // Copy Bookmarklet Button

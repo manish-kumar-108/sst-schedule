@@ -761,11 +761,43 @@
 
           <div class="mess-qr-actions">
             <button class="mc-btn mc-btn-green" id="manualRefreshQrBtn" type="button">
-              <span>🔄</span> REFRESH QR NOW
+              <span>🔄</span> REFRESH QR
+            </button>
+            <button class="mc-btn mc-btn-orange" id="openMessSyncDrawerBtn" type="button" title="Sync live QR from Scaler Mess Dashboard">
+              <span>🔗</span> SYNC REAL DASHBOARD QR
             </button>
             <button class="mc-btn mc-btn-gold" id="toggleDemoMealBtn" type="button" title="Test QR code preview anytime">
               <span>⚡</span> TEST DEMO MODE
             </button>
+          </div>
+
+          <!-- Real Scaler Mess Sync Bridge Card -->
+          <div class="mess-sync-box" id="messSyncBox" style="display: none;">
+            <div class="sync-box-header">
+              <span class="sync-box-title">⚡ REAL DASHBOARD QR SYNC</span>
+              <button class="sync-box-close" id="closeMessSyncBoxBtn" type="button">✕</button>
+            </div>
+            <div class="sync-box-desc">
+              Get the authentic live QR pass directly from your authenticated Scaler account at <strong>mess.sst-dashboard.com</strong>:
+            </div>
+            <div class="sync-actions-row">
+              <a href="https://mess.sst-dashboard.com/student/dashboard" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue sync-btn" id="openMessDashboardTabBtn">
+                <span>🌐</span> 1. OPEN MESS DASHBOARD ↗
+              </a>
+              <button class="mc-btn mc-btn-gold sync-btn" id="copyMessBookmarkletBtn" type="button">
+                <span>⚡</span> 2. COPY 1-CLICK SYNC SCRIPT
+              </button>
+              <button class="mc-btn mc-btn-green sync-btn" id="manualTokenEntryBtn" type="button">
+                <span>📋</span> PASTE TOKEN MANUALLY
+              </button>
+            </div>
+            <div class="sync-manual-input-row" id="manualTokenInputRow" style="display: none;">
+              <input type="text" class="sync-text-input" id="manualTokenInput" placeholder="Paste Scaler QR token or Clerk session token..." />
+              <button class="mc-btn mc-btn-green" id="saveManualTokenBtn" type="button">SAVE & GENERATE</button>
+            </div>
+            <div class="sync-status-indicator" id="syncStatusIndicator">
+              Status: <span id="syncStatusText" style="color: #4ade80;">Active TOTP Engine • Zero Lag</span>
+            </div>
           </div>
         </div>
 
@@ -775,44 +807,44 @@
             <div class="closed-info-icon">ℹ️</div>
             <div class="closed-title">Wrong meal time.</div>
             <div class="closed-desc">No QR is available right now.</div>
-            <div class="closed-countdown" id="closedCountdownText">Next meal: Breakfast starts at 7:30 AM</div>
-            <button class="mc-btn mc-btn-gold" id="enableDemoPassBtn" type="button" style="margin-top: 14px;">
-              <span>⚡</span> PREVIEW / TEST MEAL QR (DEMO MODE)
-            </button>
+            <div class="closed-countdown" id="closedCountdownText">Next meal: Breakfast starts at 07:30 AM</div>
+            <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px;">
+              <button class="mc-btn mc-btn-gold" id="enableDemoPassBtn" type="button">
+                <span>⚡</span> PREVIEW / TEST MEAL QR (DEMO MODE)
+              </button>
+              <a href="https://mess.sst-dashboard.com/student/dashboard" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue">
+                <span>🌐</span> OPEN DASHBOARD ↗
+              </a>
+            </div>
           </div>
         </div>
 
-        <!-- Campus Mess Schedule Grid -->
+        <!-- Campus Mess Schedule Grid: EXACTLY 3 MEALS (Breakfast, Lunch, Dinner) -->
         <div class="mess-schedule-grid">
           <div class="mess-slot-card" id="slotBreakfast">
             <div class="slot-icon">🌅</div>
             <div class="slot-info">
               <div class="slot-name">BREAKFAST</div>
-              <div class="slot-time">07:30 AM – 10:00 AM</div>
+              <div class="slot-time" id="slotTimeBreakfast">07:30 AM – 09:30 AM</div>
+              <div class="slot-source-pill">Fixed Timing</div>
             </div>
             <span class="slot-status-pill" id="statusPillBreakfast">Upcoming</span>
           </div>
           <div class="mess-slot-card" id="slotLunch">
-            <div class="slot-icon">🍖</div>
+            <div class="slot-icon">🍱</div>
             <div class="slot-info">
               <div class="slot-name">LUNCH</div>
-              <div class="slot-time">12:30 PM – 02:45 PM</div>
+              <div class="slot-time" id="slotTimeLunch">12:30 PM – 02:30 PM</div>
+              <div class="slot-source-pill" id="slotSourceLunch">Google Sheet Schedule</div>
             </div>
             <span class="slot-status-pill" id="statusPillLunch">Upcoming</span>
-          </div>
-          <div class="mess-slot-card" id="slotSnacks">
-            <div class="slot-icon">☕</div>
-            <div class="slot-info">
-              <div class="slot-name">SNACKS / HI-TEA</div>
-              <div class="slot-time">05:00 PM – 06:30 PM</div>
-            </div>
-            <span class="slot-status-pill" id="statusPillSnacks">Upcoming</span>
           </div>
           <div class="mess-slot-card" id="slotDinner">
             <div class="slot-icon">🍛</div>
             <div class="slot-info">
               <div class="slot-name">DINNER</div>
-              <div class="slot-time">08:00 PM – 10:00 PM</div>
+              <div class="slot-time" id="slotTimeDinner">07:30 PM – 09:30 PM</div>
+              <div class="slot-source-pill">Fixed Timing</div>
             </div>
             <span class="slot-status-pill" id="statusPillDinner">Upcoming</span>
           </div>
@@ -841,6 +873,8 @@
     <span id="toastMessage">Notification message</span>
   </div>
 
+  <!-- OFFLINE ZERO-LAG CLIENT-SIDE QR GENERATOR -->
+  <script src="qrcode.min.js"></script>
   <!-- APPLICATION SCRIPT -->
   <script src="app.js"></script>
 </body>

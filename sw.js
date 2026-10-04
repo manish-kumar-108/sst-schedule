@@ -1,10 +1,11 @@
 // Service Worker for SST Schedule App (Minecraft Edition)
-const CACHE_NAME = 'sst-craft-v7';
+const CACHE_NAME = 'sst-craft-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  './qrcode.min.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
