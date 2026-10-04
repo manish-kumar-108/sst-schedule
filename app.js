@@ -3023,7 +3023,6 @@ function updateBunkSimulatorResult() {
 // ==========================================
 // 6.6 SCALER MESS & REAL 30-SECOND MEAL QR ENGINE
 // ==========================================
-let isDemoMealMode = false;
 let currentMealToken = '';
 let currentMealTokenType = 'TOTP Dynamic Pass';
 let lastQrCycleTimestamp = 0;
@@ -3132,20 +3131,7 @@ function getMessMealStatus() {
       meal: activeMeal,
       statusText: `Serving ${activeMeal.name} (${activeMeal.timeStr})`,
       countdownText: `Ends in ${minsLeft}m`,
-      minsLeft,
-      isDemo: false
-    };
-  }
-
-  // Not currently in any meal window: check demo mode
-  if (isDemoMealMode) {
-    const demoMeal = mealWindows[1]; // default to Lunch for Demo
-    return {
-      isOpen: true,
-      meal: demoMeal,
-      statusText: `Demo Preview: ${demoMeal.name} (${demoMeal.timeStr})`,
-      countdownText: 'Demo Mode Active',
-      isDemo: true
+      minsLeft
     };
   }
 
@@ -3170,8 +3156,7 @@ function getMessMealStatus() {
     nextMeal,
     minsUntilNext,
     statusText: `Mess Closed • Next: ${nextMeal.name}`,
-    countdownText: `Next meal: ${nextMeal.name} starts at ${nextMeal.timeStr.split('–')[0].trim()} (in ${timeUntilStr})`,
-    isDemo: false
+    countdownText: `Next meal: ${nextMeal.name} starts at ${nextMeal.timeStr.split('–')[0].trim()} (in ${timeUntilStr})`
   };
 }
 
@@ -3211,7 +3196,6 @@ function renderMessModal() {
   const activeCard = document.getElementById('messQrActiveCard');
   const closedCard = document.getElementById('messClosedCard');
   const closedCountdown = document.getElementById('closedCountdownText');
-  const toggleDemoBtn = document.getElementById('toggleDemoMealBtn');
   const studentNameRow = document.getElementById('messStudentNameRow');
   const studentEmailRow = document.getElementById('messStudentEmailRow');
 
@@ -3227,7 +3211,7 @@ function renderMessModal() {
     if (banner) banner.style.display = 'flex';
     if (activeBadge) {
       activeBadge.className = 'mess-active-badge badge-open';
-      activeBadge.textContent = status.isDemo ? '⚡ DEMO MEAL PASS ACTIVE' : `🟢 ${status.meal.name.toUpperCase()} SERVICE ACTIVE`;
+      activeBadge.textContent = `🟢 ${status.meal.name.toUpperCase()} SERVICE ACTIVE`;
     }
     if (windowText) {
       windowText.innerHTML = `Serving: <strong>${status.meal.name} (${status.meal.timeStr})</strong> • ${status.meal.source}`;
@@ -3235,13 +3219,9 @@ function renderMessModal() {
     if (activeCard) activeCard.style.display = 'flex';
     if (closedCard) closedCard.style.display = 'none';
 
-    if (toggleDemoBtn) {
-      toggleDemoBtn.textContent = isDemoMealMode ? 'EXIT DEMO MODE' : '⚡ TEST DEMO MODE';
-    }
-
     refreshMealQrCode(false);
   } else {
-    // Closed (Screenshot replica)
+    // Closed state: No QR is available right now
     if (banner) banner.style.display = 'none';
     if (activeCard) activeCard.style.display = 'none';
     if (closedCard) closedCard.style.display = 'block';
@@ -3283,8 +3263,8 @@ function renderMealQrMatrix(payload) {
   if (!wrap) return;
 
   try {
+    wrap.innerHTML = '';
     if (typeof QRCode !== 'undefined') {
-      wrap.innerHTML = '';
       qrcodeInstance = new QRCode(wrap, {
         text: payload,
         width: 220,
@@ -3293,6 +3273,31 @@ function renderMealQrMatrix(payload) {
         colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
       });
+      const enforceDimensions = () => {
+        const img = wrap.querySelector('img');
+        const cvs = wrap.querySelector('canvas');
+        if (img) {
+          img.style.width = '220px';
+          img.style.height = '220px';
+          img.style.minWidth = '220px';
+          img.style.minHeight = '220px';
+          img.style.maxWidth = '220px';
+          img.style.maxHeight = '220px';
+          img.style.display = 'block';
+          img.style.margin = '0 auto';
+          img.classList.add('mess-qr-img');
+        }
+        if (cvs) {
+          cvs.style.width = '220px';
+          cvs.style.height = '220px';
+          cvs.style.minWidth = '220px';
+          cvs.style.minHeight = '220px';
+          cvs.style.margin = '0 auto';
+        }
+      };
+      enforceDimensions();
+      setTimeout(enforceDimensions, 30);
+      setTimeout(enforceDimensions, 100);
     } else {
       renderOfflineQrCanvas(payload);
     }
@@ -3714,22 +3719,6 @@ function setupUIEventListeners() {
       refreshMealQrCode(true);
       showToast('🔄 Meal QR Code Refreshed!');
     });
-  }
-
-  function handleDemoToggle() {
-    isDemoMealMode = !isDemoMealMode;
-    playThemeSound('portal');
-    renderMessModal();
-    updateLiveMessHud();
-    showToast(isDemoMealMode ? '⚡ Demo Meal QR Pass Active!' : 'Returned to Real-Time Mess Hours');
-  }
-
-  if (toggleDemoMealBtn) {
-    toggleDemoMealBtn.addEventListener('click', handleDemoToggle);
-  }
-
-  if (enableDemoPassBtn) {
-    enableDemoPassBtn.addEventListener('click', handleDemoToggle);
   }
 
   // Real Mess Sync Drawer Controls
