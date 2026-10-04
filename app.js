@@ -3015,8 +3015,27 @@ function updateBunkSimulatorResult() {
 }
 
 // ==========================================
-// 7. EVENT LISTENERS & CONTROLS
+// 7. EVENT LISTENERS & MODAL CONTROLS
 // ==========================================
+function openModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.add('open');
+  document.body.classList.add('modal-open');
+  const body = modalEl.querySelector('.mc-modal-body');
+  if (body) body.scrollTop = 0;
+}
+
+function closeModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.classList.remove('open');
+  const anyOpen = document.querySelector('.mc-modal-overlay.open');
+  if (!anyOpen) {
+    document.body.classList.remove('modal-open');
+  }
+}
+window.openModal = openModal;
+window.closeModal = closeModal;
+
 function setupUIEventListeners() {
   // Theme Modal controls
   const themeModal = document.getElementById('themeModal');
@@ -3027,28 +3046,28 @@ function setupUIEventListeners() {
   if (themeSwitchBtn) {
     themeSwitchBtn.addEventListener('click', () => {
       playThemeSound('click');
-      if (themeModal) themeModal.classList.add('open');
+      openModal(themeModal);
     });
   }
 
   if (loginThemeSwitchBtn) {
     loginThemeSwitchBtn.addEventListener('click', () => {
       playThemeSound('click');
-      if (themeModal) themeModal.classList.add('open');
+      openModal(themeModal);
     });
   }
 
   if (closeThemeModalBtn) {
     closeThemeModalBtn.addEventListener('click', () => {
       playThemeSound('click');
-      if (themeModal) themeModal.classList.remove('open');
+      closeModal(themeModal);
     });
   }
 
   if (themeModal) {
     themeModal.addEventListener('click', (e) => {
       if (e.target === themeModal) {
-        themeModal.classList.remove('open');
+        closeModal(themeModal);
       }
     });
   }
@@ -3112,7 +3131,7 @@ function setupUIEventListeners() {
     openAttendanceBtn.addEventListener('click', () => {
       playThemeSound('click');
       renderAttendanceModal();
-      if (attendanceModal) attendanceModal.classList.add('open');
+      openModal(attendanceModal);
     });
   }
 
@@ -3120,21 +3139,21 @@ function setupUIEventListeners() {
     hudOpenModalBtn.addEventListener('click', () => {
       playThemeSound('click');
       renderAttendanceModal();
-      if (attendanceModal) attendanceModal.classList.add('open');
+      openModal(attendanceModal);
     });
   }
 
   if (closeAttendanceModalBtn) {
     closeAttendanceModalBtn.addEventListener('click', () => {
       playThemeSound('click');
-      if (attendanceModal) attendanceModal.classList.remove('open');
+      closeModal(attendanceModal);
     });
   }
 
   if (attendanceModal) {
     attendanceModal.addEventListener('click', (e) => {
       if (e.target === attendanceModal) {
-        attendanceModal.classList.remove('open');
+        closeModal(attendanceModal);
       }
     });
   }
@@ -3233,7 +3252,7 @@ function setupUIEventListeners() {
       if (chosen) {
         applyTheme(chosen, true);
         setTimeout(() => {
-          if (themeModal) themeModal.classList.remove('open');
+          if (themeModal) closeModal(themeModal);
         }, 250);
       }
     });
@@ -3270,15 +3289,25 @@ function setupUIEventListeners() {
   document.getElementById('openTimetableBtn').addEventListener('click', () => {
     playMinecraftSound();
     renderWeeklyTimetableModal();
-    modal.classList.add('open');
+    openModal(modal);
   });
   document.getElementById('closeModalBtn').addEventListener('click', () => {
     playMinecraftSound();
-    modal.classList.remove('open');
+    closeModal(modal);
   });
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
-      modal.classList.remove('open');
+      closeModal(modal);
+    }
+  });
+
+  // Global Escape Key to close any open modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const activeModal = document.querySelector('.mc-modal-overlay.open');
+      if (activeModal) {
+        closeModal(activeModal);
+      }
     }
   });
 
