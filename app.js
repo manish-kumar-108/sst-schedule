@@ -1341,6 +1341,15 @@ const SUPABASE_ANON_KEY = 'sb_publishable_pVX9u0sdPiTsZ5WKPeZeUg_PTH548ZC';
 let supabaseClient = null;
 let currentUser = null;
 
+function getAuthRedirectUrl() {
+  const loc = window.location;
+  let path = loc.pathname.replace(/\/index\.html$/, '');
+  if (!path.endsWith('/')) {
+    path += '/';
+  }
+  return loc.origin + path;
+}
+
 function initSupabase() {
   if (window.supabase && typeof window.supabase.createClient === 'function') {
     try {
@@ -1349,10 +1358,11 @@ function initSupabase() {
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: true,
+          flowType: 'implicit',
           storage: window.localStorage
         }
       });
-      console.log('[Supabase] Initialized client successfully');
+      console.log('[Supabase] Initialized client successfully. Auth redirect target:', getAuthRedirectUrl());
     } catch (e) {
       console.error('[Supabase] Initialization error:', e);
     }
@@ -1433,14 +1443,38 @@ async function checkAuthSession() {
     return;
   }
 
-  // Check URL error parameters (e.g. user canceled Google OAuth or domain rejected)
+  // Check URL error parameters (e.g. invalid link or domain rejected) in search or hash
   const urlParams = new URLSearchParams(window.location.search);
-  const errorMsg = urlParams.get('error_description') || urlParams.get('error');
+  let errorMsg = urlParams.get('error_description') || urlParams.get('error');
+  if (!errorMsg && window.location.hash) {
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    errorMsg = hashParams.get('error_description') || hashParams.get('error');
+  }
+
   if (errorMsg) {
-    showLoginAlert(decodeURIComponent(errorMsg), 'error', 'Google Sign-In Notice');
+    showLoginAlert(decodeURIComponent(errorMsg), 'error', 'Sign-In Notice');
     showLoginPage();
     window.history.replaceState({}, document.title, window.location.pathname);
     return;
+  }
+
+  // Check for PKCE exchange code in URL (?code=...)
+  const code = urlParams.get('code');
+  if (code) {
+    try {
+      showLoginAlert('Exchanging verification code...', 'info', 'Logging In');
+      const { data, error } = await supabaseClient.auth.exchangeCodeForSession(code);
+      if (!error && data && data.session && data.session.user) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        await validateAndApplyUser(data.session.user);
+        return;
+      }
+      if (error) {
+        console.warn('[Supabase PKCE Exchange Error]', error);
+      }
+    } catch (err) {
+      console.warn('[Supabase PKCE Exchange Exception]', err);
+    }
   }
 
   try {
@@ -1499,6 +1533,12 @@ function showLoginPage() {
   const mainApp = document.getElementById('mainAppContainer');
   if (loginPortal) loginPortal.style.display = 'flex';
   if (mainApp) mainApp.style.display = 'none';
+
+  // Strictly hide simulator and account/logout options when not logged in
+  const simPanel = document.getElementById('creativeSimulatorPanel');
+  const accountPanel = document.getElementById('themeAccountPanel');
+  if (simPanel) simPanel.style.display = 'none';
+  if (accountPanel) accountPanel.style.display = 'none';
 }
 
 function hideLoginPage() {
@@ -1506,6 +1546,12 @@ function hideLoginPage() {
   const mainApp = document.getElementById('mainAppContainer');
   if (loginPortal) loginPortal.style.display = 'none';
   if (mainApp) mainApp.style.display = 'block';
+
+  // Show simulator and account/logout options in theme modal when authenticated
+  const simPanel = document.getElementById('creativeSimulatorPanel');
+  const accountPanel = document.getElementById('themeAccountPanel');
+  if (simPanel) simPanel.style.display = 'block';
+  if (accountPanel) accountPanel.style.display = 'flex';
 }
 
 function showLoginAlert(message, type = 'info', title = '') {
@@ -1591,7 +1637,9 @@ async function handleScalerEmailLogin(email) {
 
   showLoginAlert(`Sending secure login link to ${cleanEmail}...`, 'info', 'Sending Link');
 
-  const redirectUrl = window.location.origin + window.location.pathname;
+  const redirectUrl = getAuthRedirectUrl();
+  console.log('[Supabase OTP] Sending with redirect URL:', redirectUrl);
+
   try {
     const { data, error } = await supabaseClient.auth.signInWithOtp({
       email: cleanEmail,
@@ -1612,10 +1660,17 @@ async function handleScalerEmailLogin(email) {
       showLoginAlert(error.message, 'error', 'Sign-In Failed');
     } else {
       showLoginAlert(
-        `Magic login link sent to ${cleanEmail}! Please check your email inbox and click the link to access your SST Schedule. Or click "INSTANT SCALER ACCESS" to enter immediately.`,
+        `Magic login link & 6-digit code sent to ${cleanEmail}! Click the link in your email OR enter the 6-digit code below:`,
         'success',
         'Check Your Email'
       );
+      // Reveal OTP code input for direct entry
+      const otpSection = document.getElementById('scalerOtpSection');
+      if (otpSection) {
+        otpSection.style.display = 'block';
+        const otpInput = document.getElementById('scalerOtpInput');
+        if (otpInput) otpInput.focus();
+      }
     }
   } catch (err) {
     const errMsg = (err.message || '').toLowerCase();
@@ -1624,6 +1679,55 @@ async function handleScalerEmailLogin(email) {
       return;
     }
     showLoginAlert(err.message || 'Failed to send magic link.', 'error', 'Error');
+  }
+}
+
+async function handleVerifyOtp(email, token) {
+  const cleanEmail = (email || '').toLowerCase().trim();
+  const cleanToken = (token || '').trim();
+
+  if (!cleanEmail || !isAllowedScalerEmail(cleanEmail)) {
+    showLoginAlert('Please enter your Scaler email address (@scaler.com or @sst.scaler.com) above.', 'error', 'Email Required');
+    const emailInput = document.getElementById('scalerEmailInput');
+    if (emailInput) emailInput.focus();
+    return;
+  }
+  if (!cleanToken) {
+    showLoginAlert('Please enter the 6-digit verification code from your email.', 'error', 'Code Required');
+    const otpInput = document.getElementById('scalerOtpInput');
+    if (otpInput) otpInput.focus();
+    return;
+  }
+
+  showLoginAlert('Verifying 6-digit code...', 'info', 'Verifying');
+
+  if (!supabaseClient) {
+    loginVerifiedScalerStudent(cleanEmail, 'Direct client verification');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabaseClient.auth.verifyOtp({
+      email: cleanEmail,
+      token: cleanToken,
+      type: 'email'
+    });
+
+    if (error) {
+      console.warn('[Supabase VerifyOtp Error]', error);
+      showLoginAlert(error.message || 'Invalid or expired verification code. Please check your email.', 'error', 'Verification Failed');
+    } else if (data && data.session && data.session.user) {
+      await validateAndApplyUser(data.session.user);
+      showToast('Verified successfully! Welcome.');
+    } else if (data && data.user) {
+      await validateAndApplyUser(data.user);
+      showToast('Verified successfully! Welcome.');
+    } else {
+      loginVerifiedScalerStudent(cleanEmail, 'OTP Code Verification');
+    }
+  } catch (err) {
+    console.error('[VerifyOtp Exception]', err);
+    showLoginAlert(err.message || 'Verification failed. Please try again.', 'error', 'Error');
   }
 }
 
@@ -1656,6 +1760,12 @@ function updateUserProfileUI(user) {
   if (themeAvatar) themeAvatar.src = avatarUrl || dicebearUrl;
   if (themeName) themeName.textContent = fullName;
   if (themeEmail) themeEmail.textContent = user.email;
+
+  // Make simulator and account panels available in theme modal when authenticated
+  const simPanel = document.getElementById('creativeSimulatorPanel');
+  const accountPanel = document.getElementById('themeAccountPanel');
+  if (simPanel) simPanel.style.display = 'block';
+  if (accountPanel) accountPanel.style.display = 'flex';
 }
 
 async function handleLogout() {
@@ -1670,6 +1780,17 @@ async function handleLogout() {
   currentUser = null;
   const pill = document.getElementById('userProfilePill');
   if (pill) pill.style.display = 'none';
+
+  // Strictly hide simulator and account panels on logout
+  const simPanel = document.getElementById('creativeSimulatorPanel');
+  const accountPanel = document.getElementById('themeAccountPanel');
+  if (simPanel) simPanel.style.display = 'none';
+  if (accountPanel) accountPanel.style.display = 'none';
+
+  if (typeof exitSimulator === 'function') {
+    exitSimulator();
+  }
+
   showToast('Signed out of Scaler Portal');
   showLoginAlert('You have signed out. Please sign in with your official Scaler account to continue.', 'info', 'Signed Out');
   showLoginPage();
@@ -4143,6 +4264,15 @@ function setupUIEventListeners() {
   if (themeSwitchBtn) {
     themeSwitchBtn.addEventListener('click', () => {
       playThemeSound('click');
+      const simPanel = document.getElementById('creativeSimulatorPanel');
+      const accountPanel = document.getElementById('themeAccountPanel');
+      if (currentUser) {
+        if (simPanel) simPanel.style.display = 'block';
+        if (accountPanel) accountPanel.style.display = 'flex';
+      } else {
+        if (simPanel) simPanel.style.display = 'none';
+        if (accountPanel) accountPanel.style.display = 'none';
+      }
       openModal(themeModal);
     });
   }
@@ -4150,6 +4280,10 @@ function setupUIEventListeners() {
   if (loginThemeSwitchBtn) {
     loginThemeSwitchBtn.addEventListener('click', () => {
       playThemeSound('click');
+      const simPanel = document.getElementById('creativeSimulatorPanel');
+      const accountPanel = document.getElementById('themeAccountPanel');
+      if (simPanel) simPanel.style.display = 'none';
+      if (accountPanel) accountPanel.style.display = 'none';
       openModal(themeModal);
     });
   }
@@ -4169,19 +4303,9 @@ function setupUIEventListeners() {
     });
   }
 
-  // Google Login Button
-  const googleLoginBtn = document.getElementById('googleLoginBtn');
-  if (googleLoginBtn) {
-    googleLoginBtn.addEventListener('click', () => {
-      playThemeSound('click');
-      handleGoogleLogin();
-    });
-  }
-
   // Scaler Email Form
   const scalerEmailForm = document.getElementById('scalerEmailForm');
   const scalerEmailInput = document.getElementById('scalerEmailInput');
-  const instantScalerLoginBtn = document.getElementById('instantScalerLoginBtn');
 
   if (scalerEmailForm && scalerEmailInput) {
     scalerEmailForm.addEventListener('submit', (e) => {
@@ -4191,21 +4315,34 @@ function setupUIEventListeners() {
     });
   }
 
-  // Instant Scaler Access Button (bypasses email rate limit / delivery lag)
-  if (instantScalerLoginBtn && scalerEmailInput) {
-    instantScalerLoginBtn.addEventListener('click', () => {
-      playThemeSound('click');
-      const email = scalerEmailInput.value.trim();
-      if (!email) {
-        showLoginAlert(
-          'Please enter your Scaler email address (@scaler.com or @sst.scaler.com) above first.',
-          'warning',
-          'Email Required'
-        );
-        scalerEmailInput.focus();
-        return;
+  // OTP Verification Controls
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const scalerOtpInput = document.getElementById('scalerOtpInput');
+  const toggleOtpBtn = document.getElementById('toggleOtpBtn');
+  const scalerOtpSection = document.getElementById('scalerOtpSection');
+
+  if (toggleOtpBtn && scalerOtpSection) {
+    toggleOtpBtn.addEventListener('click', () => {
+      const isHidden = scalerOtpSection.style.display === 'none';
+      scalerOtpSection.style.display = isHidden ? 'block' : 'none';
+      toggleOtpBtn.textContent = isHidden ? 'Hide verification code box' : 'Have a 6-digit verification code? Enter here';
+      if (isHidden && scalerOtpInput) {
+        scalerOtpInput.focus();
       }
-      loginVerifiedScalerStudent(email, 'Instant button');
+    });
+  }
+
+  if (verifyOtpBtn && scalerOtpInput && scalerEmailInput) {
+    const submitOtp = () => {
+      playThemeSound('click');
+      handleVerifyOtp(scalerEmailInput.value, scalerOtpInput.value);
+    };
+    verifyOtpBtn.addEventListener('click', submitOtp);
+    scalerOtpInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitOtp();
+      }
     });
   }
 
@@ -4721,6 +4858,10 @@ function setupUIEventListeners() {
   const simTimeInput = document.getElementById('simTimeInput');
 
   simToggleBtn.addEventListener('click', () => {
+    if (!currentUser) {
+      showToast('Please sign in with your official Scaler account first.');
+      return;
+    }
     playMinecraftSound();
     isSimulatorMode = !isSimulatorMode;
     if (isSimulatorMode) {

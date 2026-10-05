@@ -95,7 +95,33 @@
               <button class="mc-btn mc-btn-green login-submit-btn" id="sendMagicLinkBtn" type="submit">
                 <span>🚀</span> SEND LOGIN LINK
               </button>
+            </div>
 
+            <!-- Direct 6-Digit Verification Code Section -->
+            <div class="login-otp-section" id="scalerOtpSection" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.15);">
+              <div class="login-otp-hint" style="font-size: 11px; opacity: 0.85; margin-bottom: 8px; text-align: center;">
+                ✉️ Click the link in your email OR enter the 6-digit code below:
+              </div>
+              <div class="input-wrapper" style="margin-bottom: 8px;">
+                <span class="input-icon">🔑</span>
+                <input 
+                  type="text" 
+                  id="scalerOtpInput" 
+                  class="login-input" 
+                  placeholder="Enter 6-digit code (e.g. 123456)" 
+                  maxlength="10"
+                  autocomplete="one-time-code"
+                />
+              </div>
+              <button class="mc-btn mc-btn-green login-submit-btn" id="verifyOtpBtn" type="button" style="width: 100%;">
+                <span>✅</span> VERIFY CODE &amp; ENTER
+              </button>
+            </div>
+
+            <div style="text-align: center; margin-top: 8px;">
+              <button type="button" id="toggleOtpBtn" style="background: none; border: none; color: #f59e0b; font-size: 11px; cursor: pointer; text-decoration: underline; padding: 4px;">
+                Have a 6-digit verification code? Enter here
+              </button>
             </div>
           </form>
         </div>
@@ -474,8 +500,8 @@
           </div>
         </div>
 
-        <!-- CREATIVE TIME MACHINE / SIMULATOR (PRESENT AT THE LAST OPTION BELOW ALL UI OPTIONS) -->
-        <div class="theme-simulator-panel mc-simulator-panel" id="creativeSimulatorPanel">
+        <!-- CREATIVE TIME MACHINE / SIMULATOR (ONLY VISIBLE WHEN AUTHENTICATED) -->
+        <div class="theme-simulator-panel mc-simulator-panel" id="creativeSimulatorPanel" style="display: none;">
           <div class="mc-sim-header">
             <div class="mc-sim-title">
               <span class="sim-icon">🧪</span>
@@ -527,8 +553,8 @@
           </div>
         </div>
 
-        <!-- SCALER ACCOUNT & LOGOUT (BELOW ALL UI OPTIONS) -->
-        <div class="theme-account-panel" id="themeAccountPanel">
+        <!-- SCALER ACCOUNT & LOGOUT (ONLY VISIBLE WHEN AUTHENTICATED) -->
+        <div class="theme-account-panel" id="themeAccountPanel" style="display: none;">
           <div class="theme-account-info">
             <div class="account-avatar-wrap">
               <img id="themeAccountAvatar" class="theme-account-avatar" src="" alt="Avatar" />
