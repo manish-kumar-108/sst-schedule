@@ -650,7 +650,7 @@
             Open your dashboard in another tab, then use the 1-click sync bookmarklet to auto-import your courses, attendance, and group:
           </div>
           <div class="step-actions">
-            <a href="https://sst-dashboard.com/student/dashboard/attendance" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-green" id="openScalerPortalBtn">
+            <a href="https://sst-dashboard.com/student/dashboard" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-green" id="openScalerPortalBtn">
               <span>🚀</span> 1. OPEN SST-DASHBOARD.COM
             </a>
             <button type="button" id="modalInstantSyncBtn" class="mc-btn mc-btn-gold">
@@ -664,17 +664,20 @@
           <div class="step-num">METHOD 2 • SMART AI</div>
           <div class="step-title">🧠 Smart AI Dashboard Link / Text Paste</div>
           <div class="step-desc">
-            Paste your attendance page URL or copy-paste text from your Scaler Dashboard:
+            Paste your Scaler dashboard URL or copy-paste text from your Scaler Dashboard:
           </div>
           <div class="link-input-group">
             <input 
               type="text" 
               id="aiDashboardInput" 
               class="login-input" 
-              placeholder="e.g. https://sst-dashboard.com/student/dashboard/attendance?termId=... or paste text"
+              placeholder="e.g. https://sst-dashboard.com/student/dashboard or paste text"
             />
             <button class="mc-btn mc-btn-blue" id="aiDetectGroupBtn" type="button">
               <span>🧠</span> AI DETECT &amp; LINK
+            </button>
+            <button class="mc-btn mc-btn-green" id="pasteFromClipboardBtn" type="button" title="Paste copied dashboard text from clipboard">
+              <span>📋</span> PASTE &amp; SYNC
             </button>
           </div>
         </div>
@@ -823,7 +826,7 @@
             <button class="mc-btn mc-btn-gold" id="copyBookmarkletBtn" type="button">
               <span>📋</span> COPY SCRIPT
             </button>
-            <a href="https://sst-dashboard.com/student/dashboard/attendance" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue">
+            <a href="https://sst-dashboard.com/student/dashboard" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-blue">
               <span>🌐</span> OPEN DASHBOARD
             </a>
           </div>
