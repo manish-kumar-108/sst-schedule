@@ -201,12 +201,13 @@
             <span>🍱</span> <span id="headerMessText">MEAL QR</span>
           </button>
 
-          <!-- User Profile Pill (Cleaned: logout button safely relocated below UI options) -->
+          <!-- User Profile Pill -->
           <div class="mc-user-pill" id="userProfilePill" style="display: none;" title="Your Scaler Account Profile (Click to View Theme &amp; Account Settings)">
             <img id="userAvatarImg" class="user-avatar" src="" alt="Avatar" />
             <div class="user-info-text">
+              <span class="user-name" id="userNameText">Student</span>
               <span class="user-email" id="userEmailText">student@scaler.com</span>
-              <span class="user-scaler-tag">✓ SCALER</span>
+              <span class="user-scaler-tag" id="userGroupBadge">✓ GROUP A</span>
             </div>
           </div>
         </div>
@@ -229,23 +230,29 @@
       </div>
     </section>
 
-    <!-- USER ASSIGNED GUILD / GROUP (LOCKED TO ONE GROUP VIA SCALER DASHBOARD) -->
+    <!-- USER ASSIGNED GUILD / GROUP (LOCKED TO ONE GROUP VIA OFFICIAL ROSTER) -->
     <section class="mc-group-section user-assigned-group-section" id="assignedGroupSection">
       <div class="mc-assigned-group-banner">
         <div class="assigned-group-meta">
           <span class="assigned-group-badge-icon">🛡️</span>
           <div>
-            <div class="assigned-group-tag">PERSONAL SCHEDULE &amp; TIMETABLE</div>
+            <div class="assigned-group-tag" id="userWelcomeTag">👋 WELCOME TO YOUR SST SCHEDULE</div>
             <div class="assigned-group-title" id="userAssignedGroupName">GUILD / GROUP A • 2030 Batch</div>
+            <div class="assigned-student-meta" id="studentRosterMeta" style="font-size: 10px; margin-top: 4px; color: #cbd5e1;">
+              👤 <strong id="studentRosterName" style="color: #ffd700;">Student</strong> (<span id="studentRosterRoll">--</span>) • 👨‍🏫 Assigned TA: <strong id="studentRosterTa" style="color: #4ade80;">--</strong>
+            </div>
           </div>
         </div>
         <div class="assigned-group-actions">
+          <button class="mc-btn mc-btn-purple" id="headerTaModalBtn" type="button" title="View Assigned TA Contact Details (Phone &amp; Email)">
+            <span>👨‍🏫</span> <span id="headerTaModalBtnLabel">MY TA CONTACT</span>
+          </button>
           <div class="dashboard-sync-pill" id="dashboardSyncStatusPill">
-            <span class="sync-dot dot-warn" id="syncStatusDot"></span>
-            <span id="syncStatusText">Scaler Dashboard: Not Linked</span>
+            <span class="sync-dot dot-active" id="syncStatusDot"></span>
+            <span id="syncStatusText">Roster: Matched ✓</span>
           </div>
-          <button class="mc-btn mc-btn-gold" id="headerLinkDashboardBtn" type="button" title="Link official Scaler Dashboard to auto-sync attendance &amp; group">
-            <span>🔗</span> LINK DASHBOARD
+          <button class="mc-btn mc-btn-gold" id="headerLinkDashboardBtn" type="button" title="Link official Scaler Dashboard to auto-sync attendance">
+            <span>🔗</span> DASHBOARD
           </button>
         </div>
       </div>
@@ -341,6 +348,47 @@
             <span class="safety-text" id="hudSafetyText">CRITICAL: Missing this class drops your attendance below 75%!</span>
           </div>
         </div>
+
+        <!-- DEDICATED TEACHING ASSISTANT (TA) SUPPORT HUD -->
+        <div class="mc-ta-support-hud" id="liveTaSupportHud" style="display: none;">
+          <div class="ta-hud-top">
+            <div class="ta-hud-title-wrap">
+              <span class="ta-hud-icon">👨‍🏫</span>
+              <div class="ta-hud-title-text">
+                <span class="ta-hud-course-name" id="taHudCourseContext">ICP 2030 • TA SUPPORT</span>
+                <span class="ta-hud-subtitle" id="taHudSubtitle">Facing difficulty or doubts in class? Contact your assigned TA directly:</span>
+              </div>
+            </div>
+            <span class="ta-hud-badge" id="taHudBadge">OFFICIAL TA</span>
+          </div>
+
+          <div class="ta-hud-card">
+            <div class="ta-hud-profile">
+              <div class="ta-avatar-box">
+                <span class="ta-avatar-icon">🧑‍💻</span>
+              </div>
+              <div class="ta-profile-meta">
+                <div class="ta-profile-name" id="taHudName">Aarav Porwal</div>
+                <div class="ta-profile-details">
+                  <span class="ta-detail-pill" id="taHudGroupPill">Group D TA</span>
+                  <span class="ta-detail-pill" id="taHudCodePill">INT_DSA_TA17</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ta-hud-contact-btns">
+              <a href="tel:" id="taHudCallBtn" class="mc-btn mc-btn-green ta-btn" title="Call TA">
+                <span>📞</span> <span id="taHudCallText">Call TA</span>
+              </a>
+              <a href="mailto:" id="taHudEmailBtn" class="mc-btn mc-btn-blue ta-btn" title="Email TA">
+                <span>✉️</span> <span id="taHudEmailText">Email TA</span>
+              </a>
+              <a href="#" target="_blank" rel="noopener noreferrer" id="taHudWaBtn" class="mc-btn mc-btn-gold ta-btn" title="WhatsApp TA">
+                <span>💬</span> WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- NEXT CLASS PREVIEW -->
@@ -403,8 +451,13 @@
         </button>
       </div>
       <div class="mc-modal-body">
-        <div style="font-size: 8px; color: #a4a4b2; margin-bottom: 6px;">
-          Complete weekly timetable overview for the selected group:
+        <div class="timetable-student-info" id="timetableStudentInfo" style="font-size: 10px; color: #ffd700; margin-bottom: 6px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+          <span>👤 Student: <strong id="ttStudentName">Student</strong> (<span id="ttStudentRoll">--</span>)</span>
+          <span>🛡️ Group: <strong id="ttStudentGroup">Group A</strong></span>
+          <span>👨‍🏫 Assigned TA: <strong id="ttStudentTa" style="color: #4ade80;">--</strong></span>
+        </div>
+        <div style="font-size: 8px; color: #a4a4b2; margin-bottom: 8px;">
+          Personalized weekly schedule locked strictly to your assigned SST group:
         </div>
         <div style="overflow-x: auto;">
           <table class="mc-timetable" id="weeklyTimetableGrid">
@@ -637,37 +690,82 @@
           </div>
         </div>
 
-        <!-- Sync Method 3: Instant Group Confirmation -->
+        <!-- Official Roster Status Card -->
         <div class="link-step-card">
-          <div class="step-num">METHOD 3 • INSTANT</div>
-          <div class="step-title">🎯 Instant One-Click Group Assignment</div>
+          <div class="step-num">OFFICIAL SST ROSTER MATCH</div>
+          <div class="step-title">🎯 Verified Google Sheet Roster Status</div>
           <div class="step-desc">
-            Know your assigned group? Click your group to lock your personal schedule and load your curriculum attendance:
+            Your name, group, and assigned teaching assistant have been matched directly from the official SST roster:
           </div>
-          <div class="link-quick-groups">
-            <button type="button" class="mc-btn quick-group-btn" data-quick-group="A">
-              <strong>GROUP A</strong>
-              <span>ICP • English • Web Dev</span>
-            </button>
-            <button type="button" class="mc-btn quick-group-btn" data-quick-group="B">
-              <strong>GROUP B</strong>
-              <span>Maths • ICP • Lab</span>
-            </button>
-            <button type="button" class="mc-btn quick-group-btn" data-quick-group="C">
-              <strong>GROUP C</strong>
-              <span>Web Dev • Discrete Maths</span>
-            </button>
-            <button type="button" class="mc-btn quick-group-btn" data-quick-group="D">
-              <strong>GROUP D</strong>
-              <span>Python • Foundations</span>
-            </button>
-            <button type="button" class="mc-btn quick-group-btn" data-quick-group="E">
-              <strong>GROUP E</strong>
-              <span>EC SST Track</span>
-            </button>
+          <div class="roster-match-preview" id="rosterMatchBox" style="padding: 12px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 10px; display: flex; flex-direction: column; gap: 6px;">
+            <div>👤 Student Name: <strong id="rosterBoxName" style="color: #ffd700;">Student</strong></div>
+            <div>🆔 Roll Number: <strong id="rosterBoxRoll" style="color: #cbd5e1;">--</strong></div>
+            <div>🛡️ Assigned Group: <strong id="rosterBoxGroup" style="color: #38bdf8;">Group A</strong> (Locked)</div>
+            <div>👨‍🏫 Assigned TA: <strong id="rosterBoxTa" style="color: #4ade80;">--</strong> (📞 <span id="rosterBoxPhone">--</span>)</div>
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- TEACHING ASSISTANT (TA) CONTACT MODAL       -->
+  <!-- ========================================== -->
+  <div class="mc-modal-overlay" id="taModal" role="dialog" aria-modal="true" aria-labelledby="taModalTitle">
+    <div class="mc-modal-content ta-modal-content">
+      <div class="mc-modal-header">
+        <div class="mc-modal-title" id="taModalTitle">
+          <span>👨‍🏫</span> ASSIGNED TEACHING ASSISTANT (TA)
+        </div>
+        <button id="closeTaModalBtn" class="mc-btn mc-btn-red" style="padding: 6px 12px; font-size: 10px;" aria-label="Close">✕</button>
+      </div>
+      <div class="mc-modal-body">
+        <div class="ta-modal-hero">
+          <div class="ta-modal-avatar">👨‍💻</div>
+          <h2 class="ta-modal-name" id="modalTaName">Aarav Porwal</h2>
+          <div class="ta-modal-tag" id="modalTaTag">Official Teaching Assistant • Group D</div>
+        </div>
+
+        <div class="ta-modal-card-grid">
+          <div class="ta-info-card">
+            <span class="ta-card-label">📞 PHONE / WHATSAPP</span>
+            <div class="ta-card-val" id="modalTaPhone">8970008907</div>
+            <div class="ta-card-actions">
+              <a href="tel:8970008907" id="modalTaCallLink" class="mc-btn mc-btn-green" style="font-size: 9px; padding: 6px 10px;">
+                <span>📞</span> CALL
+              </a>
+              <a href="https://wa.me/918970008907" target="_blank" rel="noopener noreferrer" id="modalTaWaLink" class="mc-btn mc-btn-gold" style="font-size: 9px; padding: 6px 10px;">
+                <span>💬</span> WHATSAPP
+              </a>
+              <button type="button" class="mc-btn" id="modalCopyPhoneBtn" style="font-size: 9px; padding: 6px 10px;">
+                <span>📋</span> COPY
+              </button>
+            </div>
+          </div>
+
+          <div class="ta-info-card">
+            <span class="ta-card-label">✉️ OFFICIAL SST EMAIL</span>
+            <div class="ta-card-val" id="modalTaEmail">aarav.25bcs10146@sst.scaler.com</div>
+            <div class="ta-card-actions">
+              <a href="mailto:aarav.25bcs10146@sst.scaler.com" id="modalTaEmailLink" class="mc-btn mc-btn-blue" style="font-size: 9px; padding: 6px 10px;">
+                <span>✉️</span> EMAIL
+              </a>
+              <button type="button" class="mc-btn" id="modalCopyEmailBtn" style="font-size: 9px; padding: 6px 10px;">
+                <span>📋</span> COPY
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ta-assistance-guide">
+          <div class="guide-title">💡 WHEN TO CONTACT YOUR TA:</div>
+          <ul class="guide-list">
+            <li><strong>ICP &amp; Programming Doubts:</strong> Code debugging, syntax errors, edge cases, and assignment guidance.</li>
+            <li><strong>Lab &amp; Environment Setup:</strong> Python / C++ environment issues, VS Code configurations, and Git/GitHub problems.</li>
+            <li><strong>Missed Classes &amp; Catch-Up:</strong> Questions about topics covered in today's session.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -1080,6 +1178,8 @@
 
   <!-- OFFLINE ZERO-LAG CLIENT-SIDE QR GENERATOR -->
   <script src="qrcode.min.js"></script>
+  <!-- STUDENT ROSTER & TA MAPPING FROM GOOGLE SHEET -->
+  <script src="roster_data.js"></script>
   <!-- APPLICATION SCRIPT -->
   <script src="app.js"></script>
 </body>

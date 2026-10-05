@@ -5429,6 +5429,440 @@ body[data-theme="pink"] .step-desc {
   max-width: 95px;
 }
 
+/* ============================================================
+   TEACHING ASSISTANT (TA) SUPPORT HUD & CARDS
+   ============================================================ */
+.mc-ta-support-hud {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 2px solid #22c55e;
+  border-radius: 8px;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+body[data-theme="minecraft"] .mc-ta-support-hud {
+  background: #181820;
+  border: 3px solid #000;
+  box-shadow: inset -3px -3px 0 #0d0d12, inset 3px 3px 0 #3a3a46, 0 0 10px rgba(34, 197, 94, 0.2);
+  border-radius: 0;
+}
+
+body[data-theme="minimal"] .mc-ta-support-hud {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 15px rgba(56, 189, 248, 0.15);
+}
+
+body[data-theme="pink"] .mc-ta-support-hud {
+  background: #fff5f8;
+  border: 2px solid #f472b6;
+  border-radius: 18px;
+  box-shadow: 0 4px 16px rgba(244, 114, 182, 0.2);
+}
+
+.ta-hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.ta-hud-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ta-hud-icon {
+  font-size: 18px;
+}
+
+.ta-hud-title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ta-hud-course-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #4ade80;
+  letter-spacing: 0.5px;
+}
+
+body[data-theme="minimal"] .ta-hud-course-name {
+  color: #38bdf8;
+}
+
+body[data-theme="pink"] .ta-hud-course-name {
+  color: #db2777;
+}
+
+.ta-hud-subtitle {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+body[data-theme="pink"] .ta-hud-subtitle {
+  color: #9d174d;
+}
+
+.ta-hud-badge {
+  font-size: 8px;
+  font-weight: 800;
+  padding: 3px 8px;
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 4px;
+}
+
+body[data-theme="minecraft"] .ta-hud-badge {
+  border-radius: 0;
+  border: 1px solid #22c55e;
+}
+
+body[data-theme="minimal"] .ta-hud-badge {
+  border-radius: 9999px;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+body[data-theme="pink"] .ta-hud-badge {
+  border-radius: 9999px;
+  background: #fce7f3;
+  color: #db2777;
+  border-color: #fbcfe8;
+}
+
+.ta-hud-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="minecraft"] .ta-hud-card {
+  background: #121217;
+  border: 2px solid #000;
+  border-radius: 0;
+}
+
+body[data-theme="minimal"] .ta-hud-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+}
+
+body[data-theme="pink"] .ta-hud-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border-color: #fbcfe8;
+}
+
+.ta-hud-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ta-avatar-box {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 50%;
+}
+
+body[data-theme="minecraft"] .ta-avatar-box {
+  border-radius: 0;
+  border: 2px solid #22c55e;
+}
+
+body[data-theme="pink"] .ta-avatar-box {
+  background: #fce7f3;
+  border-color: #f472b6;
+}
+
+.ta-profile-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ta-profile-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+body[data-theme="pink"] .ta-profile-name {
+  color: #831843;
+}
+
+.ta-profile-details {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ta-detail-pill {
+  font-size: 8px;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  border-radius: 4px;
+}
+
+body[data-theme="pink"] .ta-detail-pill {
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.ta-hud-contact-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ta-hud-contact-btns .mc-btn {
+  font-size: 9px !important;
+  padding: 6px 10px !important;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Slot TA Badge in Quest Log */
+.mc-slot-ta-info {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  padding: 3px 8px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 4px;
+  color: #86efac;
+}
+
+body[data-theme="minecraft"] .mc-slot-ta-info {
+  border-radius: 0;
+  border: 1px solid #22c55e;
+}
+
+body[data-theme="minimal"] .mc-slot-ta-info {
+  border-radius: 9999px;
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #7dd3fc;
+}
+
+body[data-theme="pink"] .mc-slot-ta-info {
+  border-radius: 9999px;
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+  color: #db2777;
+}
+
+.mc-slot-ta-info a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* TA Contact Modal Specifics */
+.ta-modal-hero {
+  text-align: center;
+  padding: 16px 12px 12px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+  margin-bottom: 16px;
+}
+
+.ta-modal-avatar {
+  font-size: 40px;
+  margin-bottom: 6px;
+}
+
+.ta-modal-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffd700;
+  margin-bottom: 4px;
+  text-shadow: var(--mc-text-shadow);
+}
+
+body[data-theme="minimal"] .ta-modal-name {
+  color: #38bdf8;
+  text-shadow: none;
+}
+
+body[data-theme="pink"] .ta-modal-name {
+  color: #db2777;
+  text-shadow: none;
+}
+
+.ta-modal-tag {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+body[data-theme="pink"] .ta-modal-tag {
+  color: #9d174d;
+}
+
+.ta-modal-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 640px) {
+  .ta-modal-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ta-info-card {
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+body[data-theme="minecraft"] .ta-info-card {
+  background: #121217;
+  border: 2px solid #000;
+  border-radius: 0;
+}
+
+body[data-theme="minimal"] .ta-info-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+}
+
+body[data-theme="pink"] .ta-info-card {
+  background: #ffffff;
+  border: 2px solid #fbcfe8;
+  border-radius: 14px;
+}
+
+.ta-card-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ta-card-val {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  word-break: break-all;
+  margin-bottom: 10px;
+}
+
+body[data-theme="pink"] .ta-card-val {
+  color: #831843;
+}
+
+.ta-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ta-card-actions a,
+.ta-card-actions button {
+  text-decoration: none;
+}
+
+.ta-assistance-guide {
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 8px;
+}
+
+body[data-theme="minecraft"] .ta-assistance-guide {
+  background: #181824;
+  border: 2px solid #000;
+  border-radius: 0;
+}
+
+body[data-theme="pink"] .ta-assistance-guide {
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+}
+
+.guide-title {
+  font-size: 9px;
+  font-weight: 800;
+  color: #60a5fa;
+  margin-bottom: 6px;
+}
+
+body[data-theme="pink"] .guide-title {
+  color: #db2777;
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 9px;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+body[data-theme="pink"] .guide-list {
+  color: #4b5563;
+}
+
+.user-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffd700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: var(--mc-text-shadow);
+}
+
+body[data-theme="minimal"] .user-name {
+  color: #38bdf8;
+  text-shadow: none;
+}
+
+body[data-theme="pink"] .user-name {
+  color: #db2777;
+  text-shadow: none;
+}
+
+
 
 
 

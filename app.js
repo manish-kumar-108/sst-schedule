@@ -1378,6 +1378,158 @@ function isAllowedScalerEmail(email) {
   return normalized.endsWith('@scaler.com') || normalized.endsWith('@sst.scaler.com');
 }
 
+// ==========================================
+// STUDENT ROSTER & TA MAPPING SYSTEM
+// ==========================================
+function lookupStudent(input) {
+  if (!input) return null;
+  const clean = String(input).toLowerCase().trim();
+  const roster = window.STUDENT_ROSTER || {};
+
+  // 1. Direct key match (email, roll number, or prefix)
+  if (roster[clean]) return roster[clean];
+
+  // 2. User prefix before @
+  const userPart = clean.split('@')[0];
+  if (roster[userPart]) return roster[userPart];
+
+  // 3. Roll number pattern match (e.g. 26bcs10691)
+  const rollMatch = clean.match(/[0-9]{2}[a-z]{3}[0-9]{4,6}/i);
+  if (rollMatch && roster[rollMatch[0].toLowerCase()]) {
+    return roster[rollMatch[0].toLowerCase()];
+  }
+
+  // 4. Scan roster values
+  for (const key of Object.keys(roster)) {
+    const s = roster[key];
+    if (s && s.email && s.email.toLowerCase() === clean) return s;
+    if (s && s.rollNo && s.rollNo.toLowerCase() === clean) return s;
+  }
+
+  // 5. Check cached localStorage profile
+  try {
+    const cached = localStorage.getItem('sst_student_profile');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && (parsed.email === clean || parsed.email?.toLowerCase().includes(userPart))) {
+        return parsed;
+      }
+    }
+  } catch (e) {}
+
+  return null;
+}
+
+function getCurrentStudentProfile() {
+  if (currentUser && currentUser.studentProfile) {
+    return currentUser.studentProfile;
+  }
+  if (currentUser && currentUser.email) {
+    const found = lookupStudent(currentUser.email);
+    if (found) {
+      currentUser.studentProfile = found;
+      return found;
+    }
+  }
+  try {
+    const cached = localStorage.getItem('sst_student_profile');
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+  return null;
+}
+
+function applyStudentRosterData(user) {
+  if (!user || !user.email) return;
+  const email = user.email.toLowerCase().trim();
+  const student = lookupStudent(email);
+
+  if (student) {
+    user.studentProfile = student;
+    user.displayName = student.name;
+    user.studentRoll = student.rollNo;
+    user.studentGroup = student.group;
+    user.studentTa = student.ta;
+
+    if (user.user_metadata) {
+      user.user_metadata.full_name = student.name;
+      user.user_metadata.name = student.name;
+    }
+
+    // Lock their group strictly to the Google Sheet group!
+    currentGroup = student.group || 'A';
+    localStorage.setItem('sst_schedule_group', currentGroup);
+    localStorage.setItem('sst_student_profile', JSON.stringify(student));
+    console.log(`[Roster] Applied student profile: ${student.name}, Group: ${student.group}, TA: ${student.ta?.name}`);
+  } else {
+    const username = email.split('@')[0];
+    const nameParts = username.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1));
+    user.displayName = nameParts.join(' ');
+  }
+}
+
+async function syncRosterFromGoogleSheet() {
+  try {
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/1bN9wPa7KIxInYnUGWA5k5WYK9KG50F4K9ZUgDX8sJsg/export?format=csv&gid=0';
+    const res = await fetch(csvUrl);
+    if (!res.ok) return;
+    const text = await res.text();
+    if (!text || text.length < 500) return;
+    
+    // Parse CSV rows
+    const lines = text.split(/\r?\n/);
+    if (!lines || lines.length < 2) return;
+    if (!window.STUDENT_ROSTER) window.STUDENT_ROSTER = {};
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      // Simple CSV split handling quotes
+      const parts = [];
+      let cur = '', inQ = false;
+      for (let j = 0; j < line.length; j++) {
+        const c = line[j];
+        if (c === '"') { inQ = !inQ; }
+        else if (c === ',' && !inQ) { parts.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      parts.push(cur.trim());
+      if (parts.length < 9) continue;
+
+      const group = (parts[0] || parts[11] || '').trim();
+      const taId = parts[1] || '';
+      const taName = parts[2] || '';
+      const taEmail = parts[3] || '';
+      const taPhone = parts[4] || '';
+      const studentName = parts[6] || '';
+      const rollNo = parts[7] || '';
+      const rawEmail = (parts[8] || '').toLowerCase().trim();
+
+      if (rawEmail && rawEmail.includes('@')) {
+        const stObj = {
+          name: studentName,
+          rollNo: rollNo,
+          email: rawEmail,
+          group: group,
+          ta: { id: taId, name: taName, email: taEmail, phone: taPhone }
+        };
+        window.STUDENT_ROSTER[rawEmail] = stObj;
+        if (rollNo) window.STUDENT_ROSTER[rollNo.toLowerCase()] = stObj;
+        const prefix = rawEmail.split('@')[0];
+        if (prefix) window.STUDENT_ROSTER[prefix] = stObj;
+      }
+    }
+    console.log('[Roster] Successfully refreshed live roster from Google Sheets');
+    if (currentUser) {
+      applyStudentRosterData(currentUser);
+      updateUserProfileUI(currentUser);
+      updateAssignedGroupUI();
+    }
+  } catch (e) {
+    // Embedded roster_data.js ensures 100% offline functionality
+    console.log('[Roster] Using offline embedded roster cache');
+  }
+}
+
 function loginVerifiedScalerStudent(email, reason = 'Campus authentication') {
   const cleanEmail = (email || '').toLowerCase().trim();
   if (!isAllowedScalerEmail(cleanEmail)) {
@@ -1389,14 +1541,14 @@ function loginVerifiedScalerStudent(email, reason = 'Campus authentication') {
     return false;
   }
 
-  // Parse friendly name from Scaler email prefix (e.g., manish.26bcs10031 -> Manish 26bcs10031)
-  const username = cleanEmail.split('@')[0];
-  const nameParts = username.split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1));
-  const displayName = nameParts.join(' ');
+  const student = lookupStudent(cleanEmail);
+  const displayName = student ? student.name : cleanEmail.split('@')[0].split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 
   const verifiedUser = {
     id: 'scaler_' + Math.random().toString(36).substr(2, 9),
     email: cleanEmail,
+    displayName: displayName,
+    studentProfile: student,
     user_metadata: {
       full_name: displayName,
       name: displayName,
@@ -1405,6 +1557,12 @@ function loginVerifiedScalerStudent(email, reason = 'Campus authentication') {
       auth_provider: 'scaler_campus_verified'
     }
   };
+
+  if (student) {
+    currentGroup = student.group || 'A';
+    localStorage.setItem('sst_schedule_group', currentGroup);
+    localStorage.setItem('sst_student_profile', JSON.stringify(student));
+  }
 
   // Persist session into localStorage
   try {
@@ -1416,8 +1574,10 @@ function loginVerifiedScalerStudent(email, reason = 'Campus authentication') {
   currentUser = verifiedUser;
   hideLoginPage();
   updateUserProfileUI(verifiedUser);
+  updateAssignedGroupUI();
+  updateDashboard();
   playThemeSound('portal');
-  showToast(`⚡ Welcome ${displayName}! Scaler access verified.`);
+  showToast(`🎉 Welcome back, ${displayName}! Group ${currentGroup} schedule loaded.`);
   return true;
 }
 
@@ -1429,8 +1589,11 @@ async function checkAuthSession() {
       const user = JSON.parse(cachedUser);
       if (user && isAllowedScalerEmail(user.email)) {
         currentUser = user;
+        applyStudentRosterData(currentUser);
         hideLoginPage();
-        updateUserProfileUI(user);
+        updateUserProfileUI(currentUser);
+        updateAssignedGroupUI();
+        updateDashboard();
         return;
       }
     } catch (e) {
@@ -1524,13 +1687,21 @@ async function validateAndApplyUser(user) {
 
   // Authorized Scaler user!
   currentUser = user;
+  applyStudentRosterData(currentUser);
   hideLoginPage();
-  updateUserProfileUI(user);
+  updateUserProfileUI(currentUser);
   if (typeof updateAssignedGroupUI === 'function') {
     updateAssignedGroupUI();
   }
   if (typeof updateDashboard === 'function') {
     updateDashboard();
+  }
+
+  const student = getCurrentStudentProfile();
+  if (student) {
+    showToast(`🎉 Welcome back, ${student.name}! Group ${student.group} schedule loaded.`);
+  } else {
+    showToast(`👋 Welcome, ${currentUser.displayName || 'Student'}!`);
   }
 
   // If user has not linked their Scaler Dashboard yet, pop up the link modal!
@@ -1755,13 +1926,17 @@ async function handleVerifyOtp(email, token) {
 function updateUserProfileUI(user) {
   const pill = document.getElementById('userProfilePill');
   const avatarImg = document.getElementById('userAvatarImg');
+  const nameText = document.getElementById('userNameText');
   const emailText = document.getElementById('userEmailText');
+  const groupBadge = document.getElementById('userGroupBadge');
   if (!pill) return;
 
   pill.style.display = 'flex';
+  const student = getCurrentStudentProfile();
+  const fullName = (student && student.name) || user.displayName || user.email.split('@')[0];
+  const groupLetter = (student && student.group) || currentGroup || 'A';
   const meta = user.user_metadata || {};
   const avatarUrl = meta.avatar_url || meta.picture || '';
-  const fullName = meta.full_name || meta.name || user.email.split('@')[0];
   const dicebearUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`;
 
   if (avatarImg) {
@@ -1769,9 +1944,17 @@ function updateUserProfileUI(user) {
     avatarImg.alt = fullName;
   }
 
+  if (nameText) {
+    nameText.textContent = fullName;
+  }
+
   if (emailText) {
     emailText.textContent = user.email;
-    emailText.title = `Signed in as ${user.email} (${fullName})`;
+    emailText.title = `Signed in as ${user.email} (${fullName} - Group ${groupLetter})`;
+  }
+
+  if (groupBadge) {
+    groupBadge.textContent = `✓ GROUP ${groupLetter}`;
   }
 
   // Update Theme Modal Account Section (below UI options)
@@ -1779,7 +1962,7 @@ function updateUserProfileUI(user) {
   const themeName = document.getElementById('themeAccountName');
   const themeEmail = document.getElementById('themeAccountEmail');
   if (themeAvatar) themeAvatar.src = avatarUrl || dicebearUrl;
-  if (themeName) themeName.textContent = fullName;
+  if (themeName) themeName.textContent = `${fullName} • Group ${groupLetter}`;
   if (themeEmail) themeEmail.textContent = user.email;
 
   // Make simulator and account panels available in theme modal when authenticated
@@ -1860,6 +2043,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Sync latest schedule in background from Google Sheet
   fetchLatestGoogleSheet();
+  syncRosterFromGoogleSheet();
 });
 
 // Load schedule from localStorage or fallback
@@ -2484,11 +2668,74 @@ function updateDashboard() {
   // Live Attendance HUD & Bunk Impact
   updateLiveAttendanceHud(status);
 
+  // Live TA Support HUD for ICP & Academic classes
+  updateTaSupportHud(status);
+
   // Live Mess Meal Pass HUD
   updateLiveMessHud();
 
   // Scaler Announcements Badge Count
   updateAnnouncementsBadge();
+}
+
+function updateTaSupportHud(status) {
+  const taHud = document.getElementById('liveTaSupportHud');
+  if (!taHud) return;
+
+  const student = getCurrentStudentProfile();
+  if (!student || !student.ta) {
+    taHud.style.display = 'none';
+    return;
+  }
+
+  const currentTitle = (status.title || '').toLowerCase();
+  const nextTitle = (status.nextClassTitle || '').toLowerCase();
+
+  const isIcpCurrent = currentTitle.includes('icp') || currentTitle.includes('programming');
+  const isIcpNext = nextTitle.includes('icp') || nextTitle.includes('programming');
+  const isAcademicCurrent = isIcpCurrent || currentTitle.includes('web dev') || currentTitle.includes('math') || currentTitle.includes('lab') || currentTitle.includes('python');
+
+  // Display TA HUD if in ICP or academic session or next encounter is ICP
+  if (isIcpCurrent || isIcpNext || isAcademicCurrent) {
+    taHud.style.display = 'block';
+
+    const courseContextEl = document.getElementById('taHudCourseContext');
+    const subtitleEl = document.getElementById('taHudSubtitle');
+    const badgeEl = document.getElementById('taHudBadge');
+
+    if (isIcpCurrent || isIcpNext) {
+      if (courseContextEl) courseContextEl.textContent = 'ICP 2030 • TA SUPPORT';
+      if (subtitleEl) subtitleEl.textContent = 'Facing difficulty, code bugs, or doubts in ICP? Contact your assigned TA directly:';
+      if (badgeEl) badgeEl.textContent = 'ICP TA';
+    } else {
+      if (courseContextEl) courseContextEl.textContent = `${status.title || 'ACADEMIC CLASS'} • TA SUPPORT`;
+      if (subtitleEl) subtitleEl.textContent = 'Need assistance or doubt clearing for this class? Contact your assigned TA:';
+      if (badgeEl) badgeEl.textContent = 'OFFICIAL TA';
+    }
+
+    const nameEl = document.getElementById('taHudName');
+    const groupPill = document.getElementById('taHudGroupPill');
+    const codePill = document.getElementById('taHudCodePill');
+    const callBtn = document.getElementById('taHudCallBtn');
+    const callText = document.getElementById('taHudCallText');
+    const emailBtn = document.getElementById('taHudEmailBtn');
+    const emailText = document.getElementById('taHudEmailText');
+    const waBtn = document.getElementById('taHudWaBtn');
+
+    if (nameEl) nameEl.textContent = student.ta.name;
+    if (groupPill) groupPill.textContent = `Group ${student.group || currentGroup} TA`;
+    if (codePill) codePill.textContent = student.ta.id || 'TA SUPPORT';
+    if (callBtn) callBtn.href = `tel:${student.ta.phone}`;
+    if (callText) callText.textContent = student.ta.phone;
+    if (emailBtn) emailBtn.href = `mailto:${student.ta.email}?subject=ICP%20/%20Class%20Doubt%20-%20${encodeURIComponent(student.name)}`;
+    if (emailText) emailText.textContent = student.ta.email;
+    if (waBtn) {
+      const cleanPhone = (student.ta.phone || '').replace(/[^0-9]/g, '');
+      waBtn.href = `https://wa.me/91${cleanPhone}?text=Hi%20${encodeURIComponent(student.ta.name)},%20I%20am%20${encodeURIComponent(student.name)}%20from%20Group%20${student.group || currentGroup}.%20I%20have%20a%20doubt%20in%20ICP/class.`;
+    }
+  } else {
+    taHud.style.display = 'none';
+  }
 }
 
 function renderStaminaIcons(status) {
@@ -2542,6 +2789,7 @@ function renderTodayScheduleList(dayName) {
   }
 
   const { totalMinutes } = getActiveTimeAndDay();
+  const student = getCurrentStudentProfile();
 
   let html = '';
   todayClasses.forEach((c) => {
@@ -2562,6 +2810,19 @@ function renderTodayScheduleList(dayName) {
       tagHtml = '<span class="mc-slot-tag mc-tag-future">UPCOMING</span>';
     }
 
+    const isIcp = /icp|computer\s*programming/i.test(c.title);
+    const isAcademic = isIcp || /lab|web dev|math/i.test(c.title);
+    let taSlotHtml = '';
+    if (isAcademic && student && student.ta) {
+      taSlotHtml = `
+        <div class="mc-slot-ta-info">
+          <span>👨‍🏫 ${isIcp ? 'ICP TA' : 'TA'}: <strong>${student.ta.name}</strong></span>
+          <span>• 📞 <a href="tel:${student.ta.phone}" title="Call TA">${student.ta.phone}</a></span>
+          <span>• <a href="mailto:${student.ta.email}?subject=Class%20Doubt%20-%20${encodeURIComponent(student.name)}" title="Email TA">Email</a></span>
+        </div>
+      `;
+    }
+
     html += `
       <div class="mc-schedule-slot ${slotClass}">
         <div class="mc-slot-time">
@@ -2571,6 +2832,7 @@ function renderTodayScheduleList(dayName) {
         <div class="mc-slot-details">
           <div class="mc-slot-subject">${c.title}</div>
           <div class="mc-slot-room">📍 ${c.location || 'SST Room'} • 🧙 ${c.instructor || 'Faculty'}</div>
+          ${taSlotHtml}
         </div>
         <div>
           ${tagHtml}
@@ -2587,6 +2849,19 @@ function renderWeeklyTimetableModal() {
   const tableBody = document.getElementById('weeklyTableBody');
   document.getElementById('modalGroupLabel').textContent = `GROUP ${currentGroup}`;
 
+  const student = getCurrentStudentProfile();
+  const ttStudentName = document.getElementById('ttStudentName');
+  const ttStudentRoll = document.getElementById('ttStudentRoll');
+  const ttStudentGroup = document.getElementById('ttStudentGroup');
+  const ttStudentTa = document.getElementById('ttStudentTa');
+
+  if (ttStudentName) ttStudentName.textContent = student ? student.name : 'Student';
+  if (ttStudentRoll) ttStudentRoll.textContent = student ? student.rollNo : '--';
+  if (ttStudentGroup) ttStudentGroup.textContent = `Group ${currentGroup}`;
+  if (ttStudentTa) {
+    ttStudentTa.textContent = (student && student.ta) ? `${student.ta.name} (${student.ta.phone})` : '--';
+  }
+
   const groupSched = (scheduleData && scheduleData[currentGroup]) ? scheduleData[currentGroup] : {};
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -2600,10 +2875,12 @@ function renderWeeklyTimetableModal() {
     } else {
       classes.forEach((c) => {
         const isLunch = c.title.toLowerCase().includes('lunch');
+        const isIcp = /icp|computer\s*programming/i.test(c.title);
         classesHtml += `
           <div class="class-chip ${isLunch ? 'lunch' : ''}">
             <strong style="color: #ffd700;">${c.startTimeFormatted} - ${c.endTimeFormatted}</strong>: 
             <span>${c.title}</span>
+            ${isIcp && student && student.ta ? `<span style="display: inline-block; margin-left: 6px; font-size: 7px; color: #4ade80; background: rgba(34,197,94,0.2); padding: 1px 4px; border-radius: 3px;">TA: ${student.ta.name}</span>` : ''}
             <div style="font-size: 7px; color: #a4a4b2; margin-top: 2px;">
               📍 ${c.location || 'Campus'} ${c.instructor ? `• ${c.instructor}` : ''}
             </div>
@@ -5230,11 +5507,93 @@ function setupAssignedGroupUI() {
       openModal(linkModal);
     });
   }
+
+  // TA Contact Modal open & close
+  const headerTaBtn = document.getElementById('headerTaModalBtn');
+  const taModal = document.getElementById('taModal');
+  const closeTaBtn = document.getElementById('closeTaModalBtn');
+
+  if (headerTaBtn && taModal) {
+    headerTaBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      populateTaModal();
+      openModal(taModal);
+    });
+  }
+
+  if (closeTaBtn && taModal) {
+    closeTaBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      closeModal(taModal);
+    });
+  }
+
+  // Copy Phone / Email in TA Modal
+  const copyPhoneBtn = document.getElementById('modalCopyPhoneBtn');
+  const copyEmailBtn = document.getElementById('modalCopyEmailBtn');
+
+  if (copyPhoneBtn) {
+    copyPhoneBtn.addEventListener('click', () => {
+      const student = getCurrentStudentProfile();
+      if (student && student.ta && student.ta.phone) {
+        navigator.clipboard.writeText(student.ta.phone).then(() => {
+          showToast(`📋 Copied TA phone: ${student.ta.phone}`);
+        });
+      }
+    });
+  }
+
+  if (copyEmailBtn) {
+    copyEmailBtn.addEventListener('click', () => {
+      const student = getCurrentStudentProfile();
+      if (student && student.ta && student.ta.email) {
+        navigator.clipboard.writeText(student.ta.email).then(() => {
+          showToast(`📋 Copied TA email: ${student.ta.email}`);
+        });
+      }
+    });
+  }
+}
+
+function populateTaModal() {
+  const student = getCurrentStudentProfile();
+  if (!student || !student.ta) return;
+
+  const ta = student.ta;
+  const nameEl = document.getElementById('modalTaName');
+  const tagEl = document.getElementById('modalTaTag');
+  const phoneEl = document.getElementById('modalTaPhone');
+  const emailEl = document.getElementById('modalTaEmail');
+  const callLink = document.getElementById('modalTaCallLink');
+  const waLink = document.getElementById('modalTaWaLink');
+  const emailLink = document.getElementById('modalTaEmailLink');
+
+  if (nameEl) nameEl.textContent = ta.name;
+  if (tagEl) tagEl.textContent = `Official Teaching Assistant • Group ${student.group || currentGroup} (${ta.id || 'TA'})`;
+  if (phoneEl) phoneEl.textContent = ta.phone;
+  if (emailEl) emailEl.textContent = ta.email;
+  if (callLink) callLink.href = `tel:${ta.phone}`;
+  if (emailLink) emailLink.href = `mailto:${ta.email}?subject=ICP%20/%20Class%20Assistance%20-%20${encodeURIComponent(student.name)}`;
+
+  if (waLink) {
+    const cleanPhone = (ta.phone || '').replace(/[^0-9]/g, '');
+    waLink.href = `https://wa.me/91${cleanPhone}?text=Hi%20${encodeURIComponent(ta.name)},%20I%20am%20${encodeURIComponent(student.name)}%20from%20Group%20${student.group || currentGroup}.%20I%20have%20a%20doubt%20in%20ICP/class.`;
+  }
 }
 
 function updateAssignedGroupUI() {
+  const student = getCurrentStudentProfile();
+  const studentName = student ? student.name : (currentUser ? currentUser.displayName : 'Student');
+  const studentRoll = student ? student.rollNo : (currentUser ? currentUser.email.split('@')[0] : '--');
+  const studentTa = (student && student.ta) ? student.ta : null;
+
   const isLinked = localStorage.getItem('sst_dashboard_linked') === 'true';
+  const welcomeTag = document.getElementById('userWelcomeTag');
   const groupNameEl = document.getElementById('userAssignedGroupName');
+  const rosterNameEl = document.getElementById('studentRosterName');
+  const rosterRollEl = document.getElementById('studentRosterRoll');
+  const rosterTaEl = document.getElementById('studentRosterTa');
+  const headerTaBtnLabel = document.getElementById('headerTaBtnLabel');
   const syncStatusDot = document.getElementById('syncStatusDot');
   const syncStatusText = document.getElementById('syncStatusText');
   const modalGroupLabel = document.getElementById('modalGroupLabel');
@@ -5248,23 +5607,54 @@ function updateAssignedGroupUI() {
     E: 'GROUP E • EC SST Track'
   };
 
+  if (welcomeTag) {
+    welcomeTag.textContent = student ? `👋 WELCOME BACK, ${student.name.toUpperCase()}!` : '👋 WELCOME TO YOUR SST SCHEDULE';
+  }
+
   if (groupNameEl) {
     groupNameEl.textContent = `GUILD / ${groupDesc[currentGroup] || `GROUP ${currentGroup}`}`;
+  }
+
+  if (rosterNameEl) rosterNameEl.textContent = studentName;
+  if (rosterRollEl) rosterRollEl.textContent = studentRoll;
+  if (rosterTaEl) {
+    rosterTaEl.textContent = studentTa ? `${studentTa.name} (${studentTa.phone})` : 'Faculty Advisor';
+  }
+
+  if (headerTaBtnLabel && studentTa) {
+    headerTaBtnLabel.textContent = `TA: ${studentTa.name.split(' ')[0].toUpperCase()}`;
   }
 
   if (modalGroupLabel) {
     modalGroupLabel.textContent = `GROUP ${currentGroup}`;
   }
 
+  // Update Roster Match Card in Link Modal
+  const rosterBoxName = document.getElementById('rosterBoxName');
+  const rosterBoxRoll = document.getElementById('rosterBoxRoll');
+  const rosterBoxGroup = document.getElementById('rosterBoxGroup');
+  const rosterBoxTa = document.getElementById('rosterBoxTa');
+  const rosterBoxPhone = document.getElementById('rosterBoxPhone');
+
+  if (rosterBoxName) rosterBoxName.textContent = studentName;
+  if (rosterBoxRoll) rosterBoxRoll.textContent = studentRoll;
+  if (rosterBoxGroup) rosterBoxGroup.textContent = `Group ${currentGroup} (Locked)`;
+  if (rosterBoxTa) rosterBoxTa.textContent = studentTa ? studentTa.name : '--';
+  if (rosterBoxPhone) rosterBoxPhone.textContent = studentTa ? studentTa.phone : '--';
+
   if (syncStatusDot && syncStatusText) {
-    if (isLinked) {
+    if (student) {
+      syncStatusDot.className = 'sync-dot dot-active';
+      syncStatusText.textContent = 'Roster: Verified ✓';
+    } else if (isLinked) {
       syncStatusDot.className = 'sync-dot dot-active';
       syncStatusText.textContent = 'Dashboard: Linked & Synced ✓';
-      if (linkBtn) linkBtn.innerHTML = '<span>🔄</span> RE-SYNC DASHBOARD';
     } else {
       syncStatusDot.className = 'sync-dot dot-warn';
       syncStatusText.textContent = 'Dashboard: Not Linked';
-      if (linkBtn) linkBtn.innerHTML = '<span>🔗</span> LINK DASHBOARD';
+    }
+    if (linkBtn) {
+      linkBtn.innerHTML = isLinked ? '<span>🔄</span> RE-SYNC' : '<span>🔗</span> DASHBOARD';
     }
   }
 }
