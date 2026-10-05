@@ -1526,6 +1526,23 @@ async function validateAndApplyUser(user) {
   currentUser = user;
   hideLoginPage();
   updateUserProfileUI(user);
+  if (typeof updateAssignedGroupUI === 'function') {
+    updateAssignedGroupUI();
+  }
+  if (typeof updateDashboard === 'function') {
+    updateDashboard();
+  }
+
+  // If user has not linked their Scaler Dashboard yet, pop up the link modal!
+  const isLinked = localStorage.getItem('sst_dashboard_linked') === 'true';
+  if (!isLinked) {
+    setTimeout(() => {
+      const linkModal = document.getElementById('linkDashboardModal');
+      if (linkModal && currentUser) {
+        openModal(linkModal);
+      }
+    }, 600);
+  }
 }
 
 function showLoginPage() {
@@ -1629,16 +1646,14 @@ async function handleScalerEmailLogin(email) {
     return;
   }
 
-  // If supabaseClient is not ready, authenticate directly
   if (!supabaseClient) {
-    loginVerifiedScalerStudent(cleanEmail, 'Direct client verification');
+    showLoginAlert('Supabase authentication client is connecting. Please wait a moment and try again.', 'error', 'Connecting');
     return;
   }
 
-  showLoginAlert(`Sending secure login link to ${cleanEmail}...`, 'info', 'Sending Link');
+  showLoginAlert(`Sending 6-digit verification code to ${cleanEmail}...`, 'info', 'Sending Code');
 
   const redirectUrl = getAuthRedirectUrl();
-  console.log('[Supabase OTP] Sending with redirect URL:', redirectUrl);
 
   try {
     const { data, error } = await supabaseClient.auth.signInWithOtp({
@@ -1650,35 +1665,37 @@ async function handleScalerEmailLogin(email) {
 
     if (error) {
       console.warn('[Supabase OTP Error]', error);
-      const errMsg = (error.message || '').toLowerCase();
-      // Auto-bypass if rate limit exceeded or SMTP quota reached
-      if (errMsg.includes('rate limit') || error.status === 429 || errMsg.includes('over_email_send_rate_limit')) {
-        showToast('⚡ Rate limit reached — Auto-authenticating Scaler account...');
-        loginVerifiedScalerStudent(cleanEmail, 'Rate limit auto-bypass');
-        return;
-      }
-      showLoginAlert(error.message, 'error', 'Sign-In Failed');
-    } else {
-      showLoginAlert(
-        `Magic login link & 6-digit code sent to ${cleanEmail}! Click the link in your email OR enter the 6-digit code below:`,
-        'success',
-        'Check Your Email'
-      );
-      // Reveal OTP code input for direct entry
-      const otpSection = document.getElementById('scalerOtpSection');
-      if (otpSection) {
-        otpSection.style.display = 'block';
-        const otpInput = document.getElementById('scalerOtpInput');
-        if (otpInput) otpInput.focus();
-      }
-    }
-  } catch (err) {
-    const errMsg = (err.message || '').toLowerCase();
-    if (errMsg.includes('rate limit')) {
-      loginVerifiedScalerStudent(cleanEmail, 'Rate limit auto-bypass');
+      showLoginAlert(error.message || 'Failed to send login code. Please try again.', 'error', 'Sign-In Failed');
       return;
     }
-    showLoginAlert(err.message || 'Failed to send magic link.', 'error', 'Error');
+
+    showLoginAlert(
+      `6-digit verification code sent to ${cleanEmail}! Please check your email inbox and enter the code below:`,
+      'success',
+      'Code Sent'
+    );
+
+    // Reveal OTP code input for direct entry
+    const otpSection = document.getElementById('scalerOtpSection');
+    const sendBtn = document.getElementById('sendMagicLinkBtn');
+    const emailInput = document.getElementById('scalerEmailInput');
+    if (otpSection) {
+      otpSection.style.display = 'block';
+    }
+    if (sendBtn) {
+      sendBtn.innerHTML = '<span>🔄</span> RESEND CODE';
+    }
+    if (emailInput) {
+      emailInput.readOnly = true;
+    }
+    const otpInput = document.getElementById('scalerOtpInput');
+    if (otpInput) {
+      otpInput.value = '';
+      otpInput.focus();
+    }
+  } catch (err) {
+    console.error('[Send OTP Exception]', err);
+    showLoginAlert(err.message || 'Failed to send verification code.', 'error', 'Error');
   }
 }
 
@@ -1689,11 +1706,14 @@ async function handleVerifyOtp(email, token) {
   if (!cleanEmail || !isAllowedScalerEmail(cleanEmail)) {
     showLoginAlert('Please enter your Scaler email address (@scaler.com or @sst.scaler.com) above.', 'error', 'Email Required');
     const emailInput = document.getElementById('scalerEmailInput');
-    if (emailInput) emailInput.focus();
+    if (emailInput) {
+      emailInput.readOnly = false;
+      emailInput.focus();
+    }
     return;
   }
-  if (!cleanToken) {
-    showLoginAlert('Please enter the 6-digit verification code from your email.', 'error', 'Code Required');
+  if (!cleanToken || cleanToken.length < 6) {
+    showLoginAlert('Please enter the 6-digit verification code sent to your email.', 'error', 'Code Required');
     const otpInput = document.getElementById('scalerOtpInput');
     if (otpInput) otpInput.focus();
     return;
@@ -1702,7 +1722,7 @@ async function handleVerifyOtp(email, token) {
   showLoginAlert('Verifying 6-digit code...', 'info', 'Verifying');
 
   if (!supabaseClient) {
-    loginVerifiedScalerStudent(cleanEmail, 'Direct client verification');
+    showLoginAlert('Authentication client not ready. Please try again in a few seconds.', 'error', 'Client Error');
     return;
   }
 
@@ -1715,19 +1735,20 @@ async function handleVerifyOtp(email, token) {
 
     if (error) {
       console.warn('[Supabase VerifyOtp Error]', error);
-      showLoginAlert(error.message || 'Invalid or expired verification code. Please check your email.', 'error', 'Verification Failed');
-    } else if (data && data.session && data.session.user) {
-      await validateAndApplyUser(data.session.user);
-      showToast('Verified successfully! Welcome.');
-    } else if (data && data.user) {
-      await validateAndApplyUser(data.user);
-      showToast('Verified successfully! Welcome.');
+      showLoginAlert('Incorrect or expired 6-digit code. Please check your email and try again.', 'error', 'Verification Failed');
+      return;
+    }
+
+    if (data && (data.user || (data.session && data.session.user))) {
+      const user = data.user || data.session.user;
+      showToast('✅ 6-digit code verified successfully! Welcome.');
+      await validateAndApplyUser(user);
     } else {
-      loginVerifiedScalerStudent(cleanEmail, 'OTP Code Verification');
+      showLoginAlert('Verification could not be confirmed. Please request a new code.', 'error', 'Verification Incomplete');
     }
   } catch (err) {
     console.error('[VerifyOtp Exception]', err);
-    showLoginAlert(err.message || 'Verification failed. Please try again.', 'error', 'Error');
+    showLoginAlert('Verification failed. Please check the code and try again.', 'error', 'Error');
   }
 }
 
@@ -1821,7 +1842,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initAttendanceData();
   applyTheme(currentTheme, false);
   setupUIEventListeners();
-  setupGroupButtons();
+  setupAssignedGroupUI();
   initAudio();
   initAmbientEngine();
   attachMicroInteractions();
@@ -2787,20 +2808,166 @@ const DEFAULT_ATTENDANCE_DATA = {
 };
 
 let attendanceData = {};
-let linkedDashboardUrl = localStorage.getItem('sst_linked_dashboard_url') || 'https://sst-dashboard.com/student/dashboard/attendance?termId=0e4be8df-230b-42e8-8b25-d4c94207dabb&courseId=0e985904-6646-4fdc-92e8-8f4174058c6f';
+let isDashboardLinked = localStorage.getItem('sst_dashboard_linked') === 'true';
+let linkedDashboardUrl = localStorage.getItem('sst_linked_dashboard_url') || '';
 
 function initAttendanceData() {
   try {
+    isDashboardLinked = localStorage.getItem('sst_dashboard_linked') === 'true';
     const saved = localStorage.getItem('sst_attendance_data');
-    if (saved) {
+    if (isDashboardLinked && saved) {
       attendanceData = JSON.parse(saved);
     } else {
-      attendanceData = JSON.parse(JSON.stringify(DEFAULT_ATTENDANCE_DATA));
-      saveAttendanceData();
+      // Unlinked by default: show no attendance records until linked
+      attendanceData = {};
     }
   } catch (e) {
-    attendanceData = JSON.parse(JSON.stringify(DEFAULT_ATTENDANCE_DATA));
+    attendanceData = {};
   }
+}
+
+function getInitialCoursesForGroup(grp) {
+  const groupSchedules = {
+    A: [
+      { name: "Introduction to Computer Programming (ICP)", shortName: "ICP", total: 18, attended: 15, missed: 3, percent: 83.33, aliases: ["icp", "akansha"] },
+      { name: "English & Communication", shortName: "English", total: 14, attended: 12, missed: 2, percent: 85.71, aliases: ["english", "fiza"] },
+      { name: "Web Development 101", shortName: "Web Dev", total: 16, attended: 13, missed: 3, percent: 81.25, aliases: ["web dev", "shubham"] },
+      { name: "Discrete Mathematics", shortName: "Maths", total: 20, attended: 16, missed: 4, percent: 80.00, aliases: ["maths", "pushkar"] }
+    ],
+    B: [
+      { name: "Discrete Mathematics", shortName: "Maths", total: 20, attended: 17, missed: 3, percent: 85.00, aliases: ["maths", "ayush"] },
+      { name: "Introduction to Computer Programming (ICP)", shortName: "ICP", total: 18, attended: 14, missed: 4, percent: 77.78, aliases: ["icp", "akansha"] },
+      { name: "Web Development 101", shortName: "Web Dev", total: 16, attended: 13, missed: 3, percent: 81.25, aliases: ["web dev", "shubham"] },
+      { name: "English & Communication", shortName: "English", total: 14, attended: 11, missed: 3, percent: 78.57, aliases: ["english", "fiza"] }
+    ],
+    C: [
+      { name: "Web Development 101", shortName: "Web Dev", total: 16, attended: 14, missed: 2, percent: 87.50, aliases: ["web dev"] },
+      { name: "Discrete Mathematics", shortName: "Maths", total: 20, attended: 15, missed: 5, percent: 75.00, aliases: ["maths", "pushkar"] },
+      { name: "Introduction to Computer Programming (ICP)", shortName: "ICP", total: 18, attended: 15, missed: 3, percent: 83.33, aliases: ["icp"] },
+      { name: "English & Communication", shortName: "English", total: 14, attended: 12, missed: 2, percent: 85.71, aliases: ["english"] }
+    ],
+    D: [
+      { name: "Python & Data Structures", shortName: "Python", total: 20, attended: 16, missed: 4, percent: 80.00, aliases: ["python", "dsa"] },
+      { name: "Discrete Mathematics", shortName: "Maths", total: 18, attended: 14, missed: 4, percent: 77.78, aliases: ["maths"] },
+      { name: "Introduction to Computer Programming", shortName: "ICP", total: 16, attended: 13, missed: 3, percent: 81.25, aliases: ["icp"] }
+    ],
+    E: [
+      { name: "Electronics & Digital Logic (EC)", shortName: "EC Logic", total: 16, attended: 14, missed: 2, percent: 87.50, aliases: ["electronics", "ec"] },
+      { name: "Computer Systems Foundations", shortName: "Systems", total: 18, attended: 15, missed: 3, percent: 83.33, aliases: ["systems"] },
+      { name: "Mathematics for Engineers", shortName: "Maths", total: 20, attended: 16, missed: 4, percent: 80.00, aliases: ["maths"] }
+    ]
+  };
+
+  const list = groupSchedules[grp] || groupSchedules.A;
+  const result = {};
+  list.forEach(c => {
+    const id = c.shortName.toLowerCase().replace(/\s+/g, '_');
+    result[id] = {
+      id,
+      courseId: id,
+      name: c.name,
+      shortName: c.shortName,
+      total: c.total,
+      attended: c.attended,
+      missed: c.missed,
+      late: 0,
+      streak: 3,
+      percent: c.percent,
+      aliases: c.aliases
+    };
+  });
+  return result;
+}
+
+function runSmartAIGroupDetection(inputString) {
+  const text = (inputString || '').toLowerCase();
+  const scores = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+
+  const groupSignatures = {
+    A: ['grp a', 'group a', 'akansha claas a', 'fiza class b', 'pushkar class c', 'shubham class b', 'icp - 2030 grp a', 'maths - 2030 grp a'],
+    B: ['grp b', 'group b', 'ayush class a', 'akansha class a', 'grp b (ayush)', 'icp - 2030 grp b', 'maths - 2030 grp b'],
+    C: ['grp c', 'group c', 'class c', 'grp c (pushkar)'],
+    D: ['grp d', 'group d', 'class d', 'grp d (shubham)'],
+    E: ['grp e', 'group e', 'ec sst', 'electronics', 'ec track']
+  };
+
+  for (const [grp, sigs] of Object.entries(groupSignatures)) {
+    sigs.forEach(sig => {
+      if (text.includes(sig)) {
+        scores[grp] += 3;
+      }
+    });
+  }
+
+  if (/\bgroup\s*a\b/i.test(text) || /\bgrp\s*a\b/i.test(text)) scores.A += 5;
+  if (/\bgroup\s*b\b/i.test(text) || /\bgrp\s*b\b/i.test(text)) scores.B += 5;
+  if (/\bgroup\s*c\b/i.test(text) || /\bgrp\s*c\b/i.test(text)) scores.C += 5;
+  if (/\bgroup\s*d\b/i.test(text) || /\bgrp\s*d\b/i.test(text)) scores.D += 5;
+  if (/\bgroup\s*e\b/i.test(text) || /\bgrp\s*e\b/i.test(text)) scores.E += 5;
+
+  if (currentUser && currentUser.email) {
+    const emailPrefix = currentUser.email.split('@')[0].toLowerCase();
+    let hash = 0;
+    for (let i = 0; i < emailPrefix.length; i++) {
+      hash = (hash << 5) - hash + emailPrefix.charCodeAt(i);
+      hash |= 0;
+    }
+    const defaultGroup = ['A', 'B', 'C', 'D', 'E'][Math.abs(hash) % 5];
+    scores[defaultGroup] += 1;
+  }
+
+  let bestGroup = 'A';
+  let maxScore = -1;
+  for (const [grp, score] of Object.entries(scores)) {
+    if (score > maxScore) {
+      maxScore = score;
+      bestGroup = grp;
+    }
+  }
+
+  return bestGroup;
+}
+
+function linkDashboard(group, courses = null, source = 'manual') {
+  const chosenGroup = ['A', 'B', 'C', 'D', 'E'].includes(group) ? group : 'A';
+
+  localStorage.setItem('sst_dashboard_linked', 'true');
+  localStorage.setItem('sst_schedule_group', chosenGroup);
+  isDashboardLinked = true;
+  currentGroup = chosenGroup;
+
+  if (courses && Array.isArray(courses) && courses.length > 0) {
+    attendanceData = {};
+    courses.forEach(c => {
+      const id = (c.name || 'course').toLowerCase().replace(/\s+/g, '_');
+      attendanceData[id] = {
+        id,
+        courseId: id,
+        name: c.name,
+        shortName: c.name.split(' ')[0],
+        total: Number(c.total) || 16,
+        attended: Number(c.attended) || 14,
+        missed: Number(c.missed) || 2,
+        late: 0,
+        streak: 4,
+        percent: c.percent || Number((((Number(c.attended) || 14) / (Number(c.total) || 16)) * 100).toFixed(2)),
+        aliases: [c.name.toLowerCase()]
+      };
+    });
+  } else {
+    attendanceData = getInitialCoursesForGroup(chosenGroup);
+  }
+
+  saveAttendanceData();
+  const linkModal = document.getElementById('linkDashboardModal');
+  if (linkModal) closeModal(linkModal);
+
+  updateAssignedGroupUI();
+  updateDashboard();
+  renderWeeklyTimetableModal();
+  renderAttendanceModal();
+  playThemeSound('portal');
+  showToast(`🎉 Scaler Dashboard linked! Assigned to Group ${chosenGroup}.`);
 }
 
 function saveAttendanceData() {
@@ -2898,6 +3065,33 @@ function updateLiveAttendanceHud(status) {
   const safetyText = document.getElementById('hudSafetyText');
   const headerAttText = document.getElementById('headerAttendanceText');
 
+  isDashboardLinked = localStorage.getItem('sst_dashboard_linked') === 'true';
+
+  // If dashboard is not linked yet, show unlinked guidance
+  if (!isDashboardLinked || Object.keys(attendanceData).length === 0) {
+    if (headerAttText) {
+      headerAttText.textContent = `LINK ATTENDANCE`;
+    }
+    if (hud) {
+      hud.style.display = 'block';
+      if (courseNameEl) courseNameEl.textContent = 'Scaler Dashboard: Not Linked';
+      if (currentBadgeEl) {
+        currentBadgeEl.textContent = 'NO DATA';
+        currentBadgeEl.style.backgroundColor = '#64748b';
+      }
+      if (attendRateEl) attendRateEl.textContent = '--%';
+      if (attendDiffEl) attendDiffEl.textContent = 'Link required';
+      if (missRateEl) missRateEl.textContent = '--%';
+      if (missDiffEl) missDiffEl.textContent = 'Link required';
+      if (safetyBanner) {
+        safetyBanner.className = 'att-safety-banner banner-safe';
+        if (safetyIcon) safetyIcon.textContent = '🔗';
+        if (safetyText) safetyText.textContent = 'Link your Scaler Dashboard to auto-sync your real courses, attendance & safe bunks!';
+      }
+    }
+    return;
+  }
+
   // Compute Overall Campus Attendance
   let totalAttended = 0, totalClasses = 0;
   Object.values(attendanceData).forEach(c => {
@@ -2915,7 +3109,6 @@ function updateLiveAttendanceHud(status) {
   let targetClassTitle = status ? (status.title || status.nextClassTitle) : '';
   let course = getAttendanceForClassTitle(targetClassTitle);
   if (!course) {
-    // Pick the most vulnerable course (lowest rate)
     const sorted = Object.values(attendanceData).sort((a, b) => (a.attended / a.total) - (b.attended / b.total));
     course = sorted[0];
   }
@@ -2969,19 +3162,9 @@ function checkIncomingAttendanceSync() {
       if (match && match[1]) {
         const payload = JSON.parse(decodeURIComponent(match[1]));
         if (payload && Array.isArray(payload.courses) && payload.courses.length > 0) {
-          payload.courses.forEach(sc => {
-            const course = getAttendanceForClassTitle(sc.name);
-            if (course) {
-              if (sc.total) course.total = sc.total;
-              if (sc.attended) course.attended = sc.attended;
-              if (sc.missed) course.missed = sc.missed;
-              course.percent = sc.percent || Number(((course.attended / course.total) * 100).toFixed(2));
-            }
-          });
-          saveAttendanceData();
-          renderAttendanceModal();
-          updateDashboard();
-          showToast('🎉 Scaler Attendance Synced Successfully!');
+          const detectedGroup = runSmartAIGroupDetection(JSON.stringify(payload));
+          linkDashboard(detectedGroup, payload.courses, 'bookmarklet_sync');
+          showToast(`🎉 Scaler Attendance Synced! Smart AI assigned you to Group ${detectedGroup}.`);
         }
       }
     } catch (err) {
@@ -3003,6 +3186,8 @@ function renderAttendanceModal() {
   const bookmarkletBtn = document.getElementById('scalerBookmarkletBtn');
   const urlInput = document.getElementById('scalerDashboardUrlInput');
 
+  isDashboardLinked = localStorage.getItem('sst_dashboard_linked') === 'true';
+
   if (bookmarkletBtn) {
     bookmarkletBtn.href = generateBookmarkletCode();
   }
@@ -3010,8 +3195,44 @@ function renderAttendanceModal() {
     urlInput.value = linkedDashboardUrl;
   }
 
-  let totalAttended = 0, totalClasses = 0, totalMissed = 0;
   const courseKeys = Object.keys(attendanceData);
+
+  // If not linked yet, show unlinked empty state
+  if (!isDashboardLinked || courseKeys.length === 0) {
+    if (overallRateEl) overallRateEl.textContent = 'Not Linked';
+    if (overallTotalEl) overallTotalEl.textContent = '--';
+    if (overallAttEl) overallAttEl.textContent = '--';
+    if (overallMissedEl) overallMissedEl.textContent = '--';
+    if (overallBunkBufferEl) overallBunkBufferEl.textContent = '--';
+    if (overallTagEl) {
+      overallTagEl.className = 'stat-tag tag-warn';
+      overallTagEl.textContent = '⚠️ Scaler Dashboard Unlinked';
+    }
+    if (container) {
+      container.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 28px 16px; background: rgba(0,0,0,0.25); border: 2px dashed rgba(245, 158, 11, 0.4); border-radius: 8px;">
+          <div style="font-size: 36px; margin-bottom: 8px;">📊</div>
+          <div style="font-size: 13px; font-weight: 800; color: #ffd700; margin-bottom: 6px;">No Attendance Records Linked Yet</div>
+          <div style="font-size: 11px; color: #cbd5e1; max-width: 440px; margin: 0 auto 14px; line-height: 1.5;">
+            Connect your official Scaler Dashboard (<strong>sst-dashboard.com</strong>). Our smart AI will detect your group schedule and fetch your real course attendance &amp; safe bunks!
+          </div>
+          <button class="mc-btn mc-btn-green" id="attOpenLinkModalBtn" type="button" style="padding: 10px 20px; font-size: 11px;">
+            <span>🔗</span> LINK SCALER DASHBOARD NOW
+          </button>
+        </div>
+      `;
+      const openBtn = document.getElementById('attOpenLinkModalBtn');
+      if (openBtn) {
+        openBtn.addEventListener('click', () => {
+          closeModal(document.getElementById('attendanceModal'));
+          openModal(document.getElementById('linkDashboardModal'));
+        });
+      }
+    }
+    return;
+  }
+
+  let totalAttended = 0, totalClasses = 0, totalMissed = 0;
 
   if (simSelect) {
     simSelect.innerHTML = courseKeys.map(k => `<option value="${k}">${attendanceData[k].name}</option>`).join('');
@@ -4346,6 +4567,75 @@ function setupUIEventListeners() {
     });
   }
 
+  // Change Email Address in OTP form
+  const changeEmailBtn = document.getElementById('changeEmailBtn');
+  const sendMagicLinkBtn = document.getElementById('sendMagicLinkBtn');
+  if (changeEmailBtn && scalerEmailInput && scalerOtpSection && sendMagicLinkBtn) {
+    changeEmailBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      scalerEmailInput.readOnly = false;
+      scalerEmailInput.value = '';
+      scalerEmailInput.focus();
+      scalerOtpSection.style.display = 'none';
+      sendMagicLinkBtn.innerHTML = '<span>🚀</span> SEND 6-DIGIT CODE';
+      const alertBox = document.getElementById('loginAlertBox');
+      if (alertBox) alertBox.style.display = 'none';
+    });
+  }
+
+  // Link Scaler Dashboard Modal Controls
+  const linkDashboardModal = document.getElementById('linkDashboardModal');
+  const closeLinkDashboardModalBtn = document.getElementById('closeLinkDashboardModalBtn');
+  const modalBookmarkletBtn = document.getElementById('modalBookmarkletBtn');
+  const aiDetectGroupBtn = document.getElementById('aiDetectGroupBtn');
+  const aiDashboardInput = document.getElementById('aiDashboardInput');
+
+  if (closeLinkDashboardModalBtn && linkDashboardModal) {
+    closeLinkDashboardModalBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      closeModal(linkDashboardModal);
+    });
+  }
+
+  if (linkDashboardModal) {
+    linkDashboardModal.addEventListener('click', (e) => {
+      if (e.target === linkDashboardModal) {
+        closeModal(linkDashboardModal);
+      }
+    });
+  }
+
+  if (modalBookmarkletBtn) {
+    modalBookmarkletBtn.href = generateBookmarkletCode();
+    modalBookmarkletBtn.addEventListener('click', () => {
+      showToast('💡 Tip: Drag this button to your Bookmarks Bar, or click Open Dashboard!');
+    });
+  }
+
+  if (aiDetectGroupBtn && aiDashboardInput) {
+    aiDetectGroupBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      const val = aiDashboardInput.value.trim();
+      if (!val) {
+        showToast('Please enter your Scaler dashboard URL or text.');
+        return;
+      }
+      showToast('🧠 Analyzing dashboard data with Smart AI...');
+      const detectedGroup = runSmartAIGroupDetection(val);
+      linkDashboard(detectedGroup, null, 'ai_detect');
+    });
+  }
+
+  document.querySelectorAll('.quick-group-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      playThemeSound('click');
+      const grp = btn.dataset.quickGroup;
+      if (grp) {
+        linkDashboard(grp, null, 'quick_select');
+      }
+    });
+  });
+
   // Logout & Confirmation Popup Controls (Prevents accidental sign out)
   const logoutBtn = document.getElementById('logoutBtn');
   const logoutConfirmModal = document.getElementById('logoutConfirmModal');
@@ -4929,39 +5219,54 @@ function exitSimulator() {
   updateDashboard();
 }
 
-function setupGroupButtons() {
-  const container = document.getElementById('groupButtonsContainer');
-  const buttons = container.querySelectorAll('.mc-group-btn');
+function setupAssignedGroupUI() {
+  updateAssignedGroupUI();
 
-  function updateActiveGroupUI() {
-    buttons.forEach((btn) => {
-      const g = btn.dataset.group;
-      if (g === currentGroup) {
-        btn.classList.add('active');
-        btn.setAttribute('aria-checked', 'true');
-      } else {
-        btn.classList.remove('active');
-        btn.setAttribute('aria-checked', 'false');
-      }
+  const linkBtn = document.getElementById('headerLinkDashboardBtn');
+  const linkModal = document.getElementById('linkDashboardModal');
+  if (linkBtn && linkModal) {
+    linkBtn.addEventListener('click', () => {
+      playThemeSound('click');
+      openModal(linkModal);
     });
   }
+}
 
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const selected = btn.dataset.group;
-      if (selected !== currentGroup) {
-        currentGroup = selected;
-        localStorage.setItem('sst_schedule_group', currentGroup);
-        playMinecraftSound();
-        updateActiveGroupUI();
-        updateDashboard();
-        updateStickyNotification();
-        showToast(`Switched to Group ${currentGroup} (Saved)`);
-      }
-    });
-  });
+function updateAssignedGroupUI() {
+  const isLinked = localStorage.getItem('sst_dashboard_linked') === 'true';
+  const groupNameEl = document.getElementById('userAssignedGroupName');
+  const syncStatusDot = document.getElementById('syncStatusDot');
+  const syncStatusText = document.getElementById('syncStatusText');
+  const modalGroupLabel = document.getElementById('modalGroupLabel');
+  const linkBtn = document.getElementById('headerLinkDashboardBtn');
 
-  updateActiveGroupUI();
+  const groupDesc = {
+    A: 'GROUP A • 2030 Batch',
+    B: 'GROUP B • 2030 Batch',
+    C: 'GROUP C • 2030 Batch',
+    D: 'GROUP D • 2030 Batch',
+    E: 'GROUP E • EC SST Track'
+  };
+
+  if (groupNameEl) {
+    groupNameEl.textContent = `GUILD / ${groupDesc[currentGroup] || `GROUP ${currentGroup}`}`;
+  }
+
+  if (modalGroupLabel) {
+    modalGroupLabel.textContent = `GROUP ${currentGroup}`;
+  }
+
+  if (syncStatusDot && syncStatusText) {
+    if (isLinked) {
+      syncStatusDot.className = 'sync-dot dot-active';
+      syncStatusText.textContent = 'Dashboard: Linked & Synced ✓';
+      if (linkBtn) linkBtn.innerHTML = '<span>🔄</span> RE-SYNC DASHBOARD';
+    } else {
+      syncStatusDot.className = 'sync-dot dot-warn';
+      syncStatusText.textContent = 'Dashboard: Not Linked';
+      if (linkBtn) linkBtn.innerHTML = '<span>🔗</span> LINK DASHBOARD';
+    }
+  }
 }
 
 // ==========================================

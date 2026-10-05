@@ -5197,6 +5197,238 @@ body[data-theme="minecraft"] .ann-card-content {
   text-decoration: none;
 }
 
+/* ============================================================
+   ASSIGNED GROUP BANNER & DASHBOARD LINK STATUS
+   ============================================================ */
+.mc-assigned-group-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background: #1b1b22;
+  border: 3px solid #000;
+  box-shadow: inset 2px 2px #2c2c36, inset -2px -2px #101014, 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="minimal"] .mc-assigned-group-banner {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="pink"] .mc-assigned-group-banner {
+  background: #fff0f5;
+  border: 2px solid #fbcfe8;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(244, 114, 182, 0.12);
+}
+
+.assigned-group-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assigned-group-badge-icon {
+  font-size: 24px;
+}
+
+.assigned-group-tag {
+  font-size: 8px;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+body[data-theme="pink"] .assigned-group-tag {
+  color: #be185d;
+}
+
+.assigned-group-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #10b981;
+  text-shadow: var(--mc-text-shadow);
+}
+
+body[data-theme="minimal"] .assigned-group-title {
+  color: #38bdf8;
+  text-shadow: none;
+}
+
+body[data-theme="pink"] .assigned-group-title {
+  color: #db2777;
+  text-shadow: none;
+}
+
+.assigned-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-sync-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  color: #cbd5e1;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="pink"] .dashboard-sync-pill {
+  background: rgba(255, 255, 255, 0.8);
+  color: #831843;
+  border: 1px solid #fbcfe8;
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.sync-dot.dot-active {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.sync-dot.dot-warn {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+  animation: pulse-red 1.5s infinite;
+}
+
+/* ============================================================
+   LINK SCALER DASHBOARD MODAL
+   ============================================================ */
+.link-dashboard-modal-box {
+  max-width: 640px !important;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.link-modal-hero {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px dashed rgba(245, 158, 11, 0.4);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.link-hero-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.link-step-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+body[data-theme="pink"] .link-step-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid #fbcfe8;
+}
+
+.step-num {
+  font-size: 8px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+body[data-theme="pink"] .step-num {
+  color: #ec4899;
+}
+
+.step-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+body[data-theme="pink"] .step-title {
+  color: #831843;
+}
+
+.step-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+body[data-theme="pink"] .step-desc {
+  color: #9d174d;
+}
+
+.step-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.step-actions a {
+  text-decoration: none;
+}
+
+.link-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.link-input-group input {
+  flex: 1;
+}
+
+.link-quick-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 8px;
+}
+
+.quick-group-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px !important;
+  text-align: center;
+  cursor: pointer;
+}
+
+.quick-group-btn strong {
+  font-size: 11px;
+  color: #ffd700;
+}
+
+.quick-group-btn span {
+  font-size: 7px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 95px;
+}
+
 
 
 

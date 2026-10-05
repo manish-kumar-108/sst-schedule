@@ -93,35 +93,37 @@
             </div>
             <div class="login-form-btn-row">
               <button class="mc-btn mc-btn-green login-submit-btn" id="sendMagicLinkBtn" type="submit">
-                <span>🚀</span> SEND LOGIN LINK
+                <span>🚀</span> SEND 6-DIGIT CODE
               </button>
             </div>
 
             <!-- Direct 6-Digit Verification Code Section -->
             <div class="login-otp-section" id="scalerOtpSection" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.15);">
-              <div class="login-otp-hint" style="font-size: 11px; opacity: 0.85; margin-bottom: 8px; text-align: center;">
-                ✉️ Click the link in your email OR enter the 6-digit code below:
+              <div class="login-otp-hint" style="font-size: 11px; opacity: 0.95; margin-bottom: 8px; text-align: center; color: #ffd700;">
+                🔑 Enter the 6-digit code sent to your email inbox:
               </div>
               <div class="input-wrapper" style="margin-bottom: 8px;">
-                <span class="input-icon">🔑</span>
+                <span class="input-icon">🔢</span>
                 <input 
                   type="text" 
                   id="scalerOtpInput" 
                   class="login-input" 
-                  placeholder="Enter 6-digit code (e.g. 123456)" 
-                  maxlength="10"
+                  placeholder="e.g. 123456" 
+                  maxlength="8"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
                   autocomplete="one-time-code"
+                  style="letter-spacing: 4px; font-size: 16px; font-weight: 700; text-align: center;"
                 />
               </div>
               <button class="mc-btn mc-btn-green login-submit-btn" id="verifyOtpBtn" type="button" style="width: 100%;">
                 <span>✅</span> VERIFY CODE &amp; ENTER
               </button>
-            </div>
-
-            <div style="text-align: center; margin-top: 8px;">
-              <button type="button" id="toggleOtpBtn" style="background: none; border: none; color: #f59e0b; font-size: 11px; cursor: pointer; text-decoration: underline; padding: 4px;">
-                Have a 6-digit verification code? Enter here
-              </button>
+              <div style="text-align: center; margin-top: 8px;">
+                <button type="button" id="changeEmailBtn" style="background: none; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; text-decoration: underline;">
+                  Change Email Address
+                </button>
+              </div>
             </div>
           </form>
         </div>
@@ -227,32 +229,25 @@
       </div>
     </section>
 
-    <!-- GROUP SELECTOR (Saved in localStorage) -->
-    <section class="mc-group-section">
-      <div class="mc-section-label">
-        <span>⚔️</span> SELECT YOUR GUILD / GROUP:
-      </div>
-      <div class="mc-group-buttons" id="groupButtonsContainer" role="radiogroup" aria-label="Select Group">
-        <button class="mc-btn mc-group-btn" data-group="A" role="radio" aria-checked="false">
-          <span class="grp-title">GROUP A</span>
-          <span class="grp-desc">2030 Batch</span>
-        </button>
-        <button class="mc-btn mc-group-btn" data-group="B" role="radio" aria-checked="false">
-          <span class="grp-title">GROUP B</span>
-          <span class="grp-desc">2030 Batch</span>
-        </button>
-        <button class="mc-btn mc-group-btn" data-group="C" role="radio" aria-checked="false">
-          <span class="grp-title">GROUP C</span>
-          <span class="grp-desc">2030 Batch</span>
-        </button>
-        <button class="mc-btn mc-group-btn" data-group="D" role="radio" aria-checked="false">
-          <span class="grp-title">GROUP D</span>
-          <span class="grp-desc">2030 Batch</span>
-        </button>
-        <button class="mc-btn mc-group-btn" data-group="E" role="radio" aria-checked="false">
-          <span class="grp-title">GROUP E</span>
-          <span class="grp-desc">EC SST</span>
-        </button>
+    <!-- USER ASSIGNED GUILD / GROUP (LOCKED TO ONE GROUP VIA SCALER DASHBOARD) -->
+    <section class="mc-group-section user-assigned-group-section" id="assignedGroupSection">
+      <div class="mc-assigned-group-banner">
+        <div class="assigned-group-meta">
+          <span class="assigned-group-badge-icon">🛡️</span>
+          <div>
+            <div class="assigned-group-tag">PERSONAL SCHEDULE &amp; TIMETABLE</div>
+            <div class="assigned-group-title" id="userAssignedGroupName">GUILD / GROUP A • 2030 Batch</div>
+          </div>
+        </div>
+        <div class="assigned-group-actions">
+          <div class="dashboard-sync-pill" id="dashboardSyncStatusPill">
+            <span class="sync-dot dot-warn" id="syncStatusDot"></span>
+            <span id="syncStatusText">Scaler Dashboard: Not Linked</span>
+          </div>
+          <button class="mc-btn mc-btn-gold" id="headerLinkDashboardBtn" type="button" title="Link official Scaler Dashboard to auto-sync attendance &amp; group">
+            <span>🔗</span> LINK DASHBOARD
+          </button>
+        </div>
       </div>
     </section>
 
@@ -572,6 +567,107 @@
             <span>🚪</span> SIGN OUT / LOGOUT
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- LINK SCALER DASHBOARD MODAL POPUP          -->
+  <!-- ========================================== -->
+  <div class="mc-modal-overlay" id="linkDashboardModal" role="dialog" aria-modal="true" aria-labelledby="linkDashboardTitle">
+    <div class="mc-modal-content link-dashboard-modal-box">
+      
+      <!-- Modal Header -->
+      <div class="mc-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">🔗</span>
+          <div>
+            <div class="mc-modal-title" id="linkDashboardTitle">LINK YOUR SCALER DASHBOARD</div>
+            <div class="mc-modal-sub">Fetch Your Personal Attendance, Real Alerts &amp; AI Group Schedule</div>
+          </div>
+        </div>
+        <button class="mc-btn mc-btn-red" id="closeLinkDashboardModalBtn" aria-label="Close Link Modal">✕</button>
+      </div>
+
+      <div class="mc-modal-body">
+        
+        <!-- Explainer Notice -->
+        <div class="link-modal-hero">
+          <div class="link-hero-icon">🤖</div>
+          <div class="link-hero-text">
+            <h4 style="margin: 0 0 4px 0; color: #ffd700;">No Attendance Record Linked Yet!</h4>
+            <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #d0d0d8;">Connect your official Scaler Student Dashboard (<strong>sst-dashboard.com</strong>). Our smart AI will detect your exact Group (A, B, C, D, or E), load only your group's schedule, and fetch your live personal course attendance.</p>
+          </div>
+        </div>
+
+        <!-- Sync Method 1: Instant Portal Bridge & 1-Click Sync -->
+        <div class="link-step-card">
+          <div class="step-num">METHOD 1 • RECOMMENDED</div>
+          <div class="step-title">⚡ Instant Auto-Sync from Scaler Portal</div>
+          <div class="step-desc">
+            Open your dashboard in another tab, then use the 1-click sync bookmarklet to auto-import your courses, attendance, and group:
+          </div>
+          <div class="step-actions">
+            <a href="https://sst-dashboard.com/student/dashboard/attendance" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-green" id="openScalerPortalBtn">
+              <span>🚀</span> 1. OPEN SST-DASHBOARD.COM
+            </a>
+            <a href="#" id="modalBookmarkletBtn" class="mc-btn mc-btn-gold" title="Drag to bookmarks or click on Scaler Dashboard tab">
+              <span>⚡</span> 2. AUTO-SYNC BOOKMARKLET
+            </a>
+          </div>
+        </div>
+
+        <!-- Sync Method 2: Smart AI URL / Data Import -->
+        <div class="link-step-card">
+          <div class="step-num">METHOD 2 • SMART AI</div>
+          <div class="step-title">🧠 Smart AI Dashboard Link / Text Paste</div>
+          <div class="step-desc">
+            Paste your attendance page URL or copy-paste text from your Scaler Dashboard:
+          </div>
+          <div class="link-input-group">
+            <input 
+              type="text" 
+              id="aiDashboardInput" 
+              class="login-input" 
+              placeholder="e.g. https://sst-dashboard.com/student/dashboard/attendance?termId=... or paste text"
+            />
+            <button class="mc-btn mc-btn-blue" id="aiDetectGroupBtn" type="button">
+              <span>🧠</span> AI DETECT &amp; LINK
+            </button>
+          </div>
+        </div>
+
+        <!-- Sync Method 3: Instant Group Confirmation -->
+        <div class="link-step-card">
+          <div class="step-num">METHOD 3 • INSTANT</div>
+          <div class="step-title">🎯 Instant One-Click Group Assignment</div>
+          <div class="step-desc">
+            Know your assigned group? Click your group to lock your personal schedule and load your curriculum attendance:
+          </div>
+          <div class="link-quick-groups">
+            <button type="button" class="mc-btn quick-group-btn" data-quick-group="A">
+              <strong>GROUP A</strong>
+              <span>ICP • English • Web Dev</span>
+            </button>
+            <button type="button" class="mc-btn quick-group-btn" data-quick-group="B">
+              <strong>GROUP B</strong>
+              <span>Maths • ICP • Lab</span>
+            </button>
+            <button type="button" class="mc-btn quick-group-btn" data-quick-group="C">
+              <strong>GROUP C</strong>
+              <span>Web Dev • Discrete Maths</span>
+            </button>
+            <button type="button" class="mc-btn quick-group-btn" data-quick-group="D">
+              <strong>GROUP D</strong>
+              <span>Python • Foundations</span>
+            </button>
+            <button type="button" class="mc-btn quick-group-btn" data-quick-group="E">
+              <strong>GROUP E</strong>
+              <span>EC SST Track</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
