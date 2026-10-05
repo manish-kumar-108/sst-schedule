@@ -78,52 +78,23 @@
         <!-- Login Actions -->
         <div class="login-actions">
 
-          <!-- Scaler Email Magic Link Form -->
+          <!-- Scaler Email Login Form (Instant Access without OTP) -->
           <form class="login-email-form" id="scalerEmailForm">
             <div class="input-wrapper">
               <span class="input-icon">✉️</span>
               <input 
-                type="email" 
+                type="text" 
                 id="scalerEmailInput" 
                 class="login-input" 
-                placeholder="student@scaler.com or @sst.scaler.com" 
+                placeholder="Enter Scaler email or roll (e.g. manish.26bcs10031@sst.scaler.com)" 
                 required
-                autocomplete="email"
+                autocomplete="username email"
               />
             </div>
             <div class="login-form-btn-row">
               <button class="mc-btn mc-btn-green login-submit-btn" id="sendMagicLinkBtn" type="submit">
-                <span>🚀</span> SEND 6-DIGIT CODE
+                <span>🚀</span> ENTER SCHEDULE HUB
               </button>
-            </div>
-
-            <!-- Direct 6-Digit Verification Code Section -->
-            <div class="login-otp-section" id="scalerOtpSection" style="display: none; margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.15);">
-              <div class="login-otp-hint" style="font-size: 11px; opacity: 0.95; margin-bottom: 8px; text-align: center; color: #ffd700;">
-                🔑 Enter the 6-digit code sent to your email inbox:
-              </div>
-              <div class="input-wrapper" style="margin-bottom: 8px;">
-                <span class="input-icon">🔢</span>
-                <input 
-                  type="text" 
-                  id="scalerOtpInput" 
-                  class="login-input" 
-                  placeholder="e.g. 123456" 
-                  maxlength="8"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  autocomplete="one-time-code"
-                  style="letter-spacing: 4px; font-size: 16px; font-weight: 700; text-align: center;"
-                />
-              </div>
-              <button class="mc-btn mc-btn-green login-submit-btn" id="verifyOtpBtn" type="button" style="width: 100%;">
-                <span>✅</span> VERIFY CODE &amp; ENTER
-              </button>
-              <div style="text-align: center; margin-top: 8px;">
-                <button type="button" id="changeEmailBtn" style="background: none; border: none; color: #94a3b8; font-size: 11px; cursor: pointer; text-decoration: underline;">
-                  Change Email Address
-                </button>
-              </div>
             </div>
           </form>
         </div>
@@ -227,6 +198,24 @@
         <button id="testNotifBtn" class="mc-btn" style="display: none;">
           TEST
         </button>
+      </div>
+    </section>
+
+    <!-- PERMANENT SCALER DASHBOARD LINK BAR (ABOVE SCREEN) -->
+    <section class="mc-permanent-link-banner unlinked" id="permanentLinkBanner">
+      <div class="perm-banner-content">
+        <div class="perm-banner-text">
+          <span class="perm-banner-icon" id="permBannerIcon">⚠️</span>
+          <div>
+            <div class="perm-banner-title" id="permBannerTitle">SCALER ATTENDANCE NOT LINKED: NO ATTENDANCE RECORDS FOUND</div>
+            <div class="perm-banner-sub" id="permBannerSub">Only schedule is active. Link your official Scaler Dashboard to fetch live course attendance, bunk calculator &amp; daily history.</div>
+          </div>
+        </div>
+        <div class="perm-banner-actions">
+          <button class="mc-btn mc-btn-gold perm-link-btn" id="permLinkDashboardBtn" type="button">
+            <span>🔗</span> <span id="permLinkBtnText">LINK SCALER DASHBOARD</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -664,9 +653,9 @@
             <a href="https://sst-dashboard.com/student/dashboard/attendance" target="_blank" rel="noopener noreferrer" class="mc-btn mc-btn-green" id="openScalerPortalBtn">
               <span>🚀</span> 1. OPEN SST-DASHBOARD.COM
             </a>
-            <a href="#" id="modalBookmarkletBtn" class="mc-btn mc-btn-gold" title="Drag to bookmarks or click on Scaler Dashboard tab">
-              <span>⚡</span> 2. AUTO-SYNC BOOKMARKLET
-            </a>
+            <button type="button" id="modalInstantSyncBtn" class="mc-btn mc-btn-gold">
+              <span>⚡</span> 2. FETCH SCALER ATTENDANCE
+            </button>
           </div>
         </div>
 

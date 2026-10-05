@@ -5862,6 +5862,197 @@ body[data-theme="pink"] .user-name {
   text-shadow: none;
 }
 
+/* ============================================================
+   PERMANENT SCALER DASHBOARD LINK BANNER (ABOVE SCREEN)
+   ============================================================ */
+.mc-permanent-link-banner {
+  margin: 10px 0 14px 0;
+  padding: 12px 16px;
+  background: rgba(30, 27, 75, 0.7);
+  border: 2px solid #eab308;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+.mc-permanent-link-banner.unlinked {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+}
+
+.mc-permanent-link-banner.linked {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.15);
+}
+
+body[data-theme="minecraft"] .mc-permanent-link-banner {
+  background: #181824;
+  border: 3px solid #000;
+  border-radius: 0;
+  box-shadow: inset -2px -2px 0 #0f0f18, inset 2px 2px 0 #3a3a4c;
+}
+
+body[data-theme="minecraft"] .mc-permanent-link-banner.unlinked {
+  border-color: #000;
+  border-left: 6px solid #f59e0b;
+}
+
+body[data-theme="minecraft"] .mc-permanent-link-banner.linked {
+  border-color: #000;
+  border-left: 6px solid #22c55e;
+}
+
+body[data-theme="minimal"] .mc-permanent-link-banner {
+  backdrop-filter: blur(16px);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+}
+
+body[data-theme="pink"] .mc-permanent-link-banner {
+  background: #fff0f5;
+  border-radius: 16px;
+  border-color: #f472b6;
+  box-shadow: 0 4px 14px rgba(244, 114, 182, 0.2);
+}
+
+body[data-theme="pink"] .mc-permanent-link-banner.unlinked {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
+body[data-theme="pink"] .mc-permanent-link-banner.linked {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.perm-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.perm-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.perm-banner-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.perm-banner-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #fbbf24;
+  margin-bottom: 2px;
+}
+
+.mc-permanent-link-banner.linked .perm-banner-title {
+  color: #4ade80;
+}
+
+body[data-theme="pink"] .perm-banner-title {
+  color: #b45309;
+}
+
+body[data-theme="pink"] .mc-permanent-link-banner.linked .perm-banner-title {
+  color: #15803d;
+}
+
+.perm-banner-sub {
+  font-size: 9px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+body[data-theme="pink"] .perm-banner-sub {
+  color: #64748b;
+}
+
+.perm-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.perm-link-btn {
+  font-size: 10px !important;
+  padding: 8px 14px !important;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Empty State Notice when Unlinked */
+.att-unlinked-notice {
+  text-align: center;
+  padding: 30px 20px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+body[data-theme="minecraft"] .att-unlinked-notice {
+  background: #14141c;
+  border: 2px dashed #4a4a58;
+  border-radius: 0;
+}
+
+body[data-theme="pink"] .att-unlinked-notice {
+  background: #ffffff;
+  border: 2px dashed #fbcfe8;
+  border-radius: 12px;
+}
+
+.att-unlinked-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.att-unlinked-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffd700;
+  margin-bottom: 6px;
+}
+
+body[data-theme="minimal"] .att-unlinked-title {
+  color: #38bdf8;
+}
+
+body[data-theme="pink"] .att-unlinked-title {
+  color: #db2777;
+}
+
+.att-unlinked-desc {
+  font-size: 10px;
+  color: #94a3b8;
+  max-width: 440px;
+  margin: 0 auto 14px auto;
+  line-height: 1.5;
+}
+
+body[data-theme="pink"] .att-unlinked-desc {
+  color: #64748b;
+}
+
+
 
 
 
